@@ -75,7 +75,10 @@ services:
       retries: ${HEALTHCHECK_RETRIES:-5}
 
   neo4j:
-    image: ${NEO4J_IMAGE:-neo4j}:${NEO4J_VERSION:-5.13.0}
+    build:
+      context: .
+      dockerfile: Dockerfile.neo4j
+    image: mem0-neo4j-gds:5.13.0
     container_name: ${NEO4J_CONTAINER_NAME:-mem0_neo4j}
     restart: ${RESTART_POLICY:-unless-stopped}
     environment:
@@ -90,7 +93,6 @@ services:
       - ${MEM0_DATA_ROOT:-/opt/mem0}/neo4j:/data
       - ${MEM0_DATA_ROOT:-/opt/mem0}/neo4j/logs:/logs
       - ${MEM0_DATA_ROOT:-/opt/mem0}/neo4j/import:/var/lib/neo4j/import
-      - ${MEM0_DATA_ROOT:-/opt/mem0}/neo4j/plugins:/plugins
     networks:
       - ${MEM0_NETWORK_NAME:-mem0_internal}
     healthcheck:
