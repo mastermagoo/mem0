@@ -1,12 +1,11 @@
 version: "3.9"
 
-# Test environment configuration
-# Environment: TEST
+# Production environment configuration
+# Environment: PRD
 # Hardware: Mac Studio (mastermagoo.taile6d019.ts.net)
-# Access: Tailscale HTTPS (mem0-test.taile6d019.ts.net)
-# Database: mem0_test
-# Storage: /Volumes/NAS/mem0-test/
-# Note: Ports offset to avoid conflict with PRD on same hardware
+# Access: Tailscale HTTPS (mem0-prd.taile6d019.ts.net)
+# Database: mem0_prd
+# Storage: /Volumes/NAS/mem0-prd/
 
 services:
   postgres:
@@ -14,13 +13,13 @@ services:
     container_name: mem0_postgres_test
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-mem0_test}
+      POSTGRES_DB: ${POSTGRES_DB:-mem0_prd}
       POSTGRES_USER: ${POSTGRES_USER:-mem0_user_test}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
     volumes:
-      - ${MEM0_DATA_ROOT:-/Volumes/NAS/mem0-test}/postgres:/var/lib/postgresql/data
+      - ${MEM0_DATA_ROOT:-/Volumes/NAS/mem0-prd}/postgres:/var/lib/postgresql/data
     ports:
-      - "127.0.0.1:${POSTGRES_PORT:-5433}:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     networks:
       - mem0_internal_test
     healthcheck:
@@ -42,16 +41,16 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER:-mem0_user_test}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-mem0_test}}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER:-mem0_user_test}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-mem0_prd}}
       OPENAI_API_KEY: ${OPENAI_API_KEY:?OPENAI_API_KEY is required}
       MEM0_API_KEY: ${MEM0_API_KEY:?MEM0_API_KEY is required}
       MEM0_BIND_ADDRESS: 0.0.0.0
       MEM0_PORT: 8888
-      ENVIRONMENT: test
+      ENVIRONMENT: prd
     volumes:
-      - ${MEM0_DATA_ROOT:-/Volumes/NAS/mem0-test}/data:/app/data
+      - ${MEM0_DATA_ROOT:-/Volumes/NAS/mem0-prd}/data:/app/data
     ports:
-      - "127.0.0.1:${MEM0_PORT:-8889}:8888"
+      - "127.0.0.1:${MEM0_PORT:-8888}:8888"
     networks:
       - mem0_internal_test
     healthcheck:
@@ -73,14 +72,14 @@ services:
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:?GRAFANA_PASSWORD is required}
-      GF_SERVER_ROOT_URL: https://${TS_SERVE_GRAFANA_DOMAIN:-grafana-test}.${TAILNET_NAME:-taile6d019.ts.net}
+      GF_SERVER_ROOT_URL: https://${TS_SERVE_GRAFANA_DOMAIN:-grafana-prd}.${TAILNET_NAME:-taile6d019.ts.net}
       GF_ANALYTICS_REPORTING_ENABLED: "false"
       GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
       GF_USERS_ALLOW_SIGN_UP: "false"
     ports:
-      - "127.0.0.1:${GRAFANA_PORT:-3001}:3000"
+      - "127.0.0.1:${GRAFANA_PORT:-3000}:3000"
     volumes:
-      - ${MEM0_DATA_ROOT:-/Volumes/NAS/mem0-test}/grafana:/var/lib/grafana
+      - ${MEM0_DATA_ROOT:-/Volumes/NAS/mem0-prd}/grafana:/var/lib/grafana
     networks:
       - mem0_internal_test
     healthcheck:

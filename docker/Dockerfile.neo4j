@@ -1,0 +1,19 @@
+FROM neo4j:5.13.0
+
+# Install Graph Data Science plugin v2.6.9 (compatible with Neo4j 5.13.0)
+# Pre-installed plugin eliminates:
+# - Internet dependency on startup
+# - Version drift risk
+# - SMB mount permission issues
+
+# Copy plugin from local file (already downloaded from /Users/kermit/mem0-data/neo4j/plugins/)
+# Note: File must be in docker/ directory (build context)
+COPY --chown=neo4j:neo4j graph-data-science.jar /var/lib/neo4j/plugins/
+
+# Set correct permissions
+RUN chmod 644 /var/lib/neo4j/plugins/graph-data-science.jar
+
+# Verify plugin exists
+RUN ls -lh /var/lib/neo4j/plugins/
+
+# Plugin will be loaded on startup via NEO4J_PLUGINS env var
