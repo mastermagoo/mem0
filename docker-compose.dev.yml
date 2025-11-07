@@ -1,0 +1,103 @@
+version: "3.9"
+
+# Development environment configuration
+# Environment: DEV
+# Hardware: MacBook Pro (developer laptop)
+# Access: Localhost (127.0.0.1) - optional Tailscale
+# Database: mem0_dev
+# Storage: ~/mem0-dev/
+# Note: Same ports as PRD (no conflict on different hardware)
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: mem0_postgres_dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-mem0_dev}
+      POSTGRES_USER: ${POSTGRES_USER:-mem0_user_dev}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dev_password_123}
+    volumes:
+      - ${MEM0_DATA_ROOT:-~/mem0-dev}/postgres:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    networks:
+      - mem0_internal_dev
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mem0_user_dev}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  mem0:
+    image: mem0ai/mem0:latest
+    container_name: mem0_server_dev
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER:-mem0_user_dev}:${POSTGRES_PASSWORD:-dev_password_123}@postgres:5432/${POSTGRES_DB:-mem0_dev}}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?OPENAI_API_KEY is required}
+      MEM0_API_KEY: ${MEM0_API_KEY:-dev-api-key-12345}
+      MEM0_BIND_ADDRESS: 0.0.0.0
+      MEM0_PORT: 8888
+      ENVIRONMENT: dev
+    volumes:
+      - ${MEM0_DATA_ROOT:-~/mem0-dev}/data:/app/data
+    ports:
+      - "127.0.0.1:${MEM0_PORT:-8888}:8888"
+    networks:
+      - mem0_internal_dev
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8888/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: mem0_grafana_dev
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_SERVER_ROOT_URL: http://localhost:3000
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_USERS_ALLOW_SIGN_UP: "true"
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Admin"
+    ports:
+      - "127.0.0.1:${GRAFANA_PORT:-3000}:3000"
+    volumes:
+      - ${MEM0_DATA_ROOT:-~/mem0-dev}/grafana:/var/lib/grafana
+    networks:
+      - mem0_internal_dev
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://127.0.0.1:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+networks:
+  mem0_internal_dev:
+    driver: bridge
+    name: mem0_internal_dev

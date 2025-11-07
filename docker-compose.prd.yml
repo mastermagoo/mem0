@@ -1,0 +1,279 @@
+version: "3.9"
+
+# Production environment configuration
+# Environment: PRD
+# Hardware: Mac Studio (mastermagoo.taile6d019.ts.net)
+# Access: Tailscale HTTPS (mem0-prd.taile6d019.ts.net)
+# Database: mem0_prd
+# Storage: /Volumes/NAS/mem0-prd/
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: mem0_postgres_prd
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-mem0_prd}
+      POSTGRES_USER: ${POSTGRES_USER:-mem0_user_prd}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      DEPLOYMENT_ENV: ${DEPLOYMENT_ENV:?Must set DEPLOYMENT_ENV=prd in .env}
+    volumes:
+      - ${MEM0_DATA_ROOT:-/Volumes/NAS/mem0-prd}/postgres:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    networks:
+      - mem0_internal
+    labels:
+      - "com.intel-system.compose-file=docker-compose.prd.yml"
+      - "com.intel-system.environment=production"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mem0_user_prd}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  mem0:
+    image: mem0-fixed:local
+    container_name: mem0_server_prd
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
+    environment:
+      # PostgreSQL connection (mem0 uses individual vars, not DATABASE_URL)
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: ${POSTGRES_INTERNAL_PORT:-5432}
+      POSTGRES_DB: ${POSTGRES_DB:-mem0_prd}
+      POSTGRES_USER: ${POSTGRES_USER:-mem0_user_prd}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      # Neo4j connection
+      NEO4J_URI: bolt://neo4j:${NEO4J_INTERNAL_BOLT_PORT:-7687}
+      NEO4J_USERNAME: ${NEO4J_USER:-neo4j}
+      NEO4J_PASSWORD: ${NEO4J_PASSWORD:?NEO4J_PASSWORD is required}
+      # API keys
+      # NOTE: OPENAI_API_KEY not required - Ollama-only mode enforced
+      # OPENAI_API_KEY: ${OPENAI_API_KEY:-}  # Optional, will be ignored
+      MEM0_API_KEY: ${MEM0_API_KEY:?MEM0_API_KEY is required}
+      # Server config
+      MEM0_BIND_ADDRESS: 0.0.0.0
+      MEM0_PORT: ${MEM0_INTERNAL_PORT:-8888}
+      # Ollama LLM and Embedder Configuration (Local-First Architecture - Added 2025-11-03)
+      OLLAMA_URL: ${OLLAMA_URL:-http://host.docker.internal:11434}
+      MEM0_LLM_PROVIDER: ${MEM0_LLM_PROVIDER:-ollama}
+      MEM0_LLM_MODEL: ${MEM0_LLM_MODEL:-mistral:7b-instruct-q5_K_M}
+      MEM0_EMBEDDER_PROVIDER: ${MEM0_EMBEDDER_PROVIDER:-ollama}
+      MEM0_EMBEDDER_MODEL: ${MEM0_EMBEDDER_MODEL:-nomic-embed-text:latest}
+      HISTORY_DB_PATH: /app/data/history.db
+      ENVIRONMENT: prd
+      DEPLOYMENT_ENV: ${DEPLOYMENT_ENV:?Must set DEPLOYMENT_ENV=prd in .env}
+    command: ["/bin/bash", "/app/start_mem0_with_patch.sh"]
+    volumes:
+      - ${MEM0_DATA_ROOT:-/Volumes/NAS/mem0-prd}/data:/app/data
+      - ./mem0_gds_patch_v2.py:/app/mem0_gds_patch_v2.py:ro
+      - ./enforce_ollama_only.py:/app/enforce_ollama_only.py:ro
+      - ./mock_ollama_module.py:/app/mock_ollama_module.py:ro
+      - ./start_mem0_with_patch.sh:/app/start_mem0_with_patch.sh:ro
+    ports:
+      - "127.0.0.1:${MEM0_PORT:-8888}:8888"
+    networks:
+      - mem0_internal
+    labels:
+      - "com.intel-system.compose-file=docker-compose.prd.yml"
+      - "com.intel-system.environment=production"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "--max-time", "60", "http://127.0.0.1:8888/docs"]
+      interval: 30s
+      timeout: 60s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  neo4j:
+    image: neo4j:5.13.0
+    container_name: mem0_neo4j_prd
+    restart: unless-stopped
+    environment:
+      NEO4J_AUTH: ${NEO4J_USER:-neo4j}/${NEO4J_PASSWORD:?NEO4J_PASSWORD is required}
+      NEO4J_PLUGINS: '["graph-data-science"]'
+      NEO4J_dbms_security_procedures_unrestricted: gds.*
+      NEO4J_dbms_security_procedures_allowlist: gds.*
+      DEPLOYMENT_ENV: ${DEPLOYMENT_ENV:?Must set DEPLOYMENT_ENV=prd in .env}
+    ports:
+      - "127.0.0.1:${NEO4J_HTTP_PORT:-7474}:7474"
+      - "127.0.0.1:${NEO4J_BOLT_PORT:-7687}:7687"
+    volumes:
+      - ${MEM0_DATA_ROOT:-/Volumes/NAS/mem0-prd}/neo4j:/data
+      - ${MEM0_DATA_ROOT:-/Volumes/NAS/mem0-prd}/neo4j/logs:/logs
+      - ${MEM0_DATA_ROOT:-/Volumes/NAS/mem0-prd}/neo4j/import:/var/lib/neo4j/import
+      - ${MEM0_DATA_ROOT:-/Volumes/NAS/mem0-prd}/neo4j/plugins:/plugins
+    networks:
+      - mem0_internal
+    labels:
+      - "com.intel-system.compose-file=docker-compose.prd.yml"
+      - "com.intel-system.environment=production"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:7474 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: mem0_grafana_prd
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:?GRAFANA_PASSWORD is required}
+      GF_SERVER_ROOT_URL: https://${TS_SERVE_GRAFANA_DOMAIN:-grafana-prd}.${TAILNET_NAME:-taile6d019.ts.net}
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      DEPLOYMENT_ENV: ${DEPLOYMENT_ENV:?Must set DEPLOYMENT_ENV=prd in .env}
+    ports:
+      - "127.0.0.1:${GRAFANA_PORT:-3000}:3000"
+    volumes:
+      - ${MEM0_DATA_ROOT:-/Volumes/NAS/mem0-prd}/grafana:/var/lib/grafana
+    networks:
+      - mem0_internal
+    labels:
+      - "com.intel-system.compose-file=docker-compose.prd.yml"
+      - "com.intel-system.environment=production"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://127.0.0.1:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  telegram_bot:
+    build:
+      context: ./telegram_bot
+    container_name: mem0_telegram_bot_prd
+    restart: unless-stopped
+    depends_on:
+      mem0:
+        condition: service_healthy
+    environment:
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:?TELEGRAM_BOT_TOKEN is required}
+      MEM0_URL: http://mem0_server_prd:${MEM0_INTERNAL_PORT:-8888}
+      MEM0_API_KEY: ${MEM0_API_KEY:?MEM0_API_KEY is required}
+      DEFAULT_NAMESPACE: personal
+      USER_PREFIX: mark_carey
+      MAX_RECALL_RESULTS: "5"
+      DEPLOYMENT_ENV: ${DEPLOYMENT_ENV:?Must set DEPLOYMENT_ENV=prd in .env}
+    networks:
+      - mem0_internal
+    labels:
+      - "com.intel-system.compose-file=docker-compose.prd.yml"
+      - "com.intel-system.environment=production"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: mem0_prometheus
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ${MEM0_DATA_ROOT:-/Volumes/NAS/mem0-prd}/prometheus:/prometheus
+    ports:
+      - "127.0.0.1:9091:9090"
+    networks:
+      - mem0_internal
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    labels:
+      - "com.intel-system.compose-file=docker-compose.prd.yml"
+      - "com.intel-system.environment=production"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  mem0_exporter:
+    image: python:3.11-slim
+    container_name: mem0_prometheus_exporter
+    restart: unless-stopped
+    depends_on:
+      mem0:
+        condition: service_healthy
+    environment:
+      MEM0_URL: http://mem0_server_prd:8888
+      MEM0_API_KEY: ${MEM0_API_KEY:-}
+      PROMETHEUS_PORT: 9093
+      SCRAPE_INTERVAL: 15
+    volumes:
+      - /Volumes/Data/ai_projects/intel-system/scripts/mem0_prometheus_exporter.py:/app/exporter.py:ro
+    working_dir: /app
+    command: ["sh", "-c", "pip install prometheus-client requests && python exporter.py"]
+    ports:
+      - "127.0.0.1:9093:9093"
+    networks:
+      - mem0_internal
+    labels:
+      - "com.intel-system.compose-file=docker-compose.prd.yml"
+      - "com.intel-system.environment=production"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  ollama_exporter:
+    image: python:3.11-slim
+    container_name: mem0_ollama_exporter
+    restart: unless-stopped
+    environment:
+      OLLAMA_INSTANCES: http://host.docker.internal:11434,http://host.docker.internal:11435,http://host.docker.internal:11436
+      PROMETHEUS_PORT: 9092
+      SCRAPE_INTERVAL: 15
+    volumes:
+      - /Volumes/Data/ai_projects/intel-system/scripts/ollama_prometheus_exporter.py:/app/exporter.py:ro
+    working_dir: /app
+    command: ["sh", "-c", "pip install prometheus-client requests && python exporter.py"]
+    ports:
+      - "127.0.0.1:9092:9092"
+    networks:
+      - mem0_internal
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    labels:
+      - "com.intel-system.compose-file=docker-compose.prd.yml"
+      - "com.intel-system.environment=production"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  mem0_internal:
+    driver: bridge
+    name: mem0_internal
+    external: true

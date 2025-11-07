@@ -1,0 +1,29 @@
+FROM mem0/mem0-api-server:latest
+
+# Install system dependencies for PostgreSQL
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq-dev \
+    gcc \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install PostgreSQL Python drivers, Neo4j dependencies, BM25 ranking, LLM routing
+# NOTE: No ollama package - mem0 uses HTTP API calls (httpx) to host-metal Ollama
+RUN pip install --no-cache-dir \
+    psycopg2-binary \
+    psycopg[binary,pool] \
+    langchain-neo4j \
+    rank-bm25 \
+    uvicorn[standard] \
+    httpx \
+    openai
+
+# Copy LLM router for local-first routing strategy
+COPY llm_router.py /app/llm_router.py
+
+# Verify psycopg2 works (more reliable than psycopg)
+RUN python -c "import psycopg2; print('PostgreSQL drivers installed successfully')"
+
+# Start FastAPI server with Uvicorn
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8888"]
