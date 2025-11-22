@@ -50,26 +50,19 @@ services:
       # PostgreSQL connection (mem0 uses individual vars, not DATABASE_URL)
       POSTGRES_HOST: postgres
       POSTGRES_PORT: ${POSTGRES_INTERNAL_PORT:-5432}
-      POSTGRES_DB: ${POSTGRES_DB:-mem0_prd}
-      POSTGRES_USER: ${POSTGRES_USER:-mem0_user_prd}
+      POSTGRES_DB: ${POSTGRES_DB:-mem0}
+      POSTGRES_USER: ${POSTGRES_USER:-mem0_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       # Neo4j connection
       NEO4J_URI: bolt://neo4j:${NEO4J_INTERNAL_BOLT_PORT:-7687}
       NEO4J_USERNAME: ${NEO4J_USER:-neo4j}
       NEO4J_PASSWORD: ${NEO4J_PASSWORD:?NEO4J_PASSWORD is required}
       # API keys
-      # NOTE: OPENAI_API_KEY not required - Ollama-only mode enforced
-      # OPENAI_API_KEY: ${OPENAI_API_KEY:-}  # Optional, will be ignored
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?OPENAI_API_KEY is required}
       MEM0_API_KEY: ${MEM0_API_KEY:?MEM0_API_KEY is required}
       # Server config
       MEM0_BIND_ADDRESS: 0.0.0.0
       MEM0_PORT: ${MEM0_INTERNAL_PORT:-8888}
-      # Ollama LLM and Embedder Configuration (Local-First Architecture - Added 2025-11-03)
-      OLLAMA_URL: ${OLLAMA_URL:-http://host.docker.internal:11434}
-      MEM0_LLM_PROVIDER: ${MEM0_LLM_PROVIDER:-ollama}
-      MEM0_LLM_MODEL: ${MEM0_LLM_MODEL:-mistral:7b-instruct-q5_K_M}
-      MEM0_EMBEDDER_PROVIDER: ${MEM0_EMBEDDER_PROVIDER:-ollama}
-      MEM0_EMBEDDER_MODEL: ${MEM0_EMBEDDER_MODEL:-nomic-embed-text:latest}
       HISTORY_DB_PATH: /app/data/history.db
       ENVIRONMENT: prd
       DEPLOYMENT_ENV: ${DEPLOYMENT_ENV:?Must set DEPLOYMENT_ENV=prd in .env}
@@ -77,8 +70,6 @@ services:
     volumes:
       - ${MEM0_DATA_ROOT:-/Volumes/NAS/mem0-prd}/data:/app/data
       - ./mem0_gds_patch_v2.py:/app/mem0_gds_patch_v2.py:ro
-      - ./enforce_ollama_only.py:/app/enforce_ollama_only.py:ro
-      - ./mock_ollama_module.py:/app/mock_ollama_module.py:ro
       - ./start_mem0_with_patch.sh:/app/start_mem0_with_patch.sh:ro
     ports:
       - "127.0.0.1:${MEM0_PORT:-8888}:8888"
@@ -88,11 +79,11 @@ services:
       - "com.intel-system.compose-file=docker-compose.prd.yml"
       - "com.intel-system.environment=production"
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "--max-time", "60", "http://127.0.0.1:8888/docs"]
-      interval: 30s
-      timeout: 60s
-      retries: 3
-      start_period: 60s
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8888/docs"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     logging:
       driver: "json-file"
       options:
@@ -184,85 +175,6 @@ services:
       DEPLOYMENT_ENV: ${DEPLOYMENT_ENV:?Must set DEPLOYMENT_ENV=prd in .env}
     networks:
       - mem0_internal
-    labels:
-      - "com.intel-system.compose-file=docker-compose.prd.yml"
-      - "com.intel-system.environment=production"
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: mem0_prometheus
-    restart: unless-stopped
-    volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - ${MEM0_DATA_ROOT:-/Volumes/NAS/mem0-prd}/prometheus:/prometheus
-    ports:
-      - "127.0.0.1:9091:9090"
-    networks:
-      - mem0_internal
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-    labels:
-      - "com.intel-system.compose-file=docker-compose.prd.yml"
-      - "com.intel-system.environment=production"
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  mem0_exporter:
-    image: python:3.11-slim
-    container_name: mem0_prometheus_exporter
-    restart: unless-stopped
-    depends_on:
-      mem0:
-        condition: service_healthy
-    environment:
-      MEM0_URL: http://mem0_server_prd:8888
-      MEM0_API_KEY: ${MEM0_API_KEY:-}
-      PROMETHEUS_PORT: 9093
-      SCRAPE_INTERVAL: 15
-    volumes:
-      - /Volumes/Data/ai_projects/intel-system/scripts/mem0_prometheus_exporter.py:/app/exporter.py:ro
-    working_dir: /app
-    command: ["sh", "-c", "pip install prometheus-client requests && python exporter.py"]
-    ports:
-      - "127.0.0.1:9093:9093"
-    networks:
-      - mem0_internal
-    labels:
-      - "com.intel-system.compose-file=docker-compose.prd.yml"
-      - "com.intel-system.environment=production"
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  ollama_exporter:
-    image: python:3.11-slim
-    container_name: mem0_ollama_exporter
-    restart: unless-stopped
-    environment:
-      OLLAMA_INSTANCES: http://host.docker.internal:11434,http://host.docker.internal:11435,http://host.docker.internal:11436
-      PROMETHEUS_PORT: 9092
-      SCRAPE_INTERVAL: 15
-    volumes:
-      - /Volumes/Data/ai_projects/intel-system/scripts/ollama_prometheus_exporter.py:/app/exporter.py:ro
-    working_dir: /app
-    command: ["sh", "-c", "pip install prometheus-client requests && python exporter.py"]
-    ports:
-      - "127.0.0.1:9092:9092"
-    networks:
-      - mem0_internal
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     labels:
       - "com.intel-system.compose-file=docker-compose.prd.yml"
       - "com.intel-system.environment=production"
