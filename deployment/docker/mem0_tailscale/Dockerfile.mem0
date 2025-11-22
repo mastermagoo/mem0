@@ -1,0 +1,5 @@
+FROM mem0-fixed:local
+ENV OLLAMA_BASE_URL=http://ollama:11434
+COPY patch_api_and_config.py /app/patch_api_and_config.py
+RUN python3 /app/patch_api_and_config.py && rm /app/patch_api_and_config.py
+WORKDIR /app
