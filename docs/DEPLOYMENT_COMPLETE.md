@@ -113,7 +113,7 @@ curl "http://127.0.0.1:8888/memories?user_id=mark_carey/personal&query=meeting" 
 - ⚠️ **Minor Token Issue** - Bot currently using old token
 - **Fix Needed:** Update docker-compose.yml telegram_bot environment:
   - Current: `8018200111:AAGn3FMWE0bJRMCuZ6Otp2LXDazkHRZiWl8`
-  - Needed: `8199806035:AAE5K_yg6VjFolOl3CGKewuAv52yN47BRz4`
+  - Needed: `${TELEGRAM_BOT_TOKEN}` (set in .env)
 - **Commands Ready:** `/remember`, `/recall`, `/namespace`, `/stats`, `/list`
 - **Documentation:** `telegram_bot/USER_GUIDE.md` (comprehensive, 445 lines)
 

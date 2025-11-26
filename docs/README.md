@@ -101,7 +101,7 @@ MEM0_API_KEY=mem0-b0539021-c9a6-4aaa-9193-665f63851a0d
 MEM0_PORT=8888
 
 # Telegram Bot
-TELEGRAM_BOT_TOKEN=8199806035:AAE5K_yg6VjFolOl3CGKewuAv52yN47BRz4
+TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
 ```
 
 ### Data Storage
