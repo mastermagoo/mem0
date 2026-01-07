@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PostgreSQL Python drivers, Neo4j dependencies, BM25 ranking, LLM routing
-# NOTE: No ollama package - mem0 uses HTTP API calls (httpx) to host-metal Ollama
+# NOTE: ollama package IS required for mem0's ollama embedder provider
 RUN pip install --no-cache-dir \
     psycopg2-binary \
     psycopg[binary,pool] \
@@ -17,13 +17,27 @@ RUN pip install --no-cache-dir \
     rank-bm25 \
     uvicorn[standard] \
     httpx \
-    openai
+    openai \
+    ollama
+
+# =============================================================================
+# PERMANENT OLLAMA FIX: Replace upstream main.py with env-var driven version
+# =============================================================================
+# The upstream mem0 image hardcodes OpenAI in main.py and ignores env vars.
+# This replacement reads MEM0_LLM_PROVIDER and MEM0_EMBEDDER_PROVIDER from env.
+# Approved: 2026-01-07 via Wingman oversight (Option A - Strategic Permanent Fix)
+# =============================================================================
+COPY main_ollama.py /app/main.py
 
 # Copy LLM router for local-first routing strategy
 COPY llm_router.py /app/llm_router.py
 
 # Verify psycopg2 works (more reliable than psycopg)
 RUN python -c "import psycopg2; print('PostgreSQL drivers installed successfully')"
+
+# Default to Ollama provider (can be overridden via env vars)
+ENV MEM0_LLM_PROVIDER=ollama
+ENV MEM0_EMBEDDER_PROVIDER=ollama
 
 # Start FastAPI server with Uvicorn
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8888"]
