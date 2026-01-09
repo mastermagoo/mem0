@@ -1,3 +1,5 @@
+version: "3.9"
+
 # Test environment configuration
 # Environment: TEST
 # Hardware: Mac Studio (mastermagoo.taile6d019.ts.net)
@@ -22,8 +24,8 @@ services:
     networks:
       - mem0_internal_test
     labels:
-      - "com.intel-system.compose-file=docker-compose.test.yml"
-      - "com.intel-system.environment=test"
+      - "com.mem0-system.compose-file=docker-compose.test.yml"
+      - "com.mem0-system.environment=test"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mem0_user_test}"]
       interval: 10s
@@ -37,9 +39,6 @@ services:
 
   mem0:
     image: ${MEM0_IMAGE:-mem0-fixed:local}
-    build:
-      context: .
-      dockerfile: Dockerfile.mem0
     container_name: mem0_server_test
     restart: unless-stopped
     depends_on:
@@ -59,8 +58,7 @@ services:
       NEO4J_USERNAME: ${NEO4J_USER:-neo4j}
       NEO4J_PASSWORD: ${NEO4J_PASSWORD:?NEO4J_PASSWORD is required}
       # API keys
-      # Ollama-only deployments do not require OpenAI. Keep optional for legacy/fallback.
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?OPENAI_API_KEY is required}
       MEM0_API_KEY: ${MEM0_API_KEY:?MEM0_API_KEY is required}
       # Server config
       MEM0_BIND_ADDRESS: 0.0.0.0
@@ -68,18 +66,18 @@ services:
       HISTORY_DB_PATH: /app/data/history.db
       ENVIRONMENT: test
       DEPLOYMENT_ENV: ${DEPLOYMENT_ENV:?Must set DEPLOYMENT_ENV=test in .env}
-    command: ["/bin/bash", "/app/start_mem0_with_patch.sh"]
+    command: ["/bin/bash", "/app/start_mem0_openai.sh"]
     volumes:
       - ${MEM0_DATA_ROOT:-/Users/kermit/mem0-data-test}/data:/app/data
-      - ./mem0_gds_patch_v2.py:/app/mem0_gds_patch_v2.py:ro
-      - ./start_mem0_with_patch.sh:/app/start_mem0_with_patch.sh:ro
+      - ./lib/mem0_gds_patch_v2_simple.py:/app/mem0_gds_patch_v2.py:ro
+      - ./scripts/start_mem0_openai.sh:/app/start_mem0_openai.sh:ro
     ports:
       - "127.0.0.1:${MEM0_PORT:-18888}:8888"
     networks:
       - mem0_internal_test
     labels:
-      - "com.intel-system.compose-file=docker-compose.test.yml"
-      - "com.intel-system.environment=test"
+      - "com.mem0-system.compose-file=docker-compose.test.yml"
+      - "com.mem0-system.environment=test"
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8888/docs"]
       interval: 15s
@@ -113,8 +111,8 @@ services:
     networks:
       - mem0_internal_test
     labels:
-      - "com.intel-system.compose-file=docker-compose.test.yml"
-      - "com.intel-system.environment=test"
+      - "com.mem0-system.compose-file=docker-compose.test.yml"
+      - "com.mem0-system.environment=test"
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:7474 || exit 1"]
       interval: 10s
@@ -145,8 +143,8 @@ services:
     networks:
       - mem0_internal_test
     labels:
-      - "com.intel-system.compose-file=docker-compose.test.yml"
-      - "com.intel-system.environment=test"
+      - "com.mem0-system.compose-file=docker-compose.test.yml"
+      - "com.mem0-system.environment=test"
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
       interval: 30s
@@ -160,7 +158,6 @@ services:
         max-file: "3"
 
   telegram_bot:
-    profiles: ["telegram"]
     build:
       context: ./telegram_bot
     container_name: mem0_telegram_bot_test
@@ -169,8 +166,7 @@ services:
       mem0:
         condition: service_healthy
     environment:
-      # Optional unless you enable the `telegram` profile and intend to run the bot
-      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:?TELEGRAM_BOT_TOKEN is required}
       # Safety: always target the internal service name on the compose network
       MEM0_URL: http://mem0:8888
       MEM0_API_KEY: ${MEM0_API_KEY:?MEM0_API_KEY is required}
@@ -181,8 +177,8 @@ services:
     networks:
       - mem0_internal_test
     labels:
-      - "com.intel-system.compose-file=docker-compose.test.yml"
-      - "com.intel-system.environment=test"
+      - "com.mem0-system.compose-file=docker-compose.test.yml"
+      - "com.mem0-system.environment=test"
     logging:
       driver: "json-file"
       options:

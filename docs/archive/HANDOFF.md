@@ -274,7 +274,7 @@ POSTGRES_USER=mem0_user
 POSTGRES_DB=mem0
 
 # Neo4j
-NEO4J_PASSWORD=mem0_neo4j_pass
+NEO4J_PASSWORD=REPLACE_ME
 
 # Ports
 MEM0_PORT=8888
@@ -412,7 +412,7 @@ Total: < 1% CPU, ~650MB RAM
    - Import mem0 dashboard JSON
    - Configure Prometheus data source
    - Set up alerting rules
-   - URL: http://127.0.0.1:3001 (admin/admin)
+   - URL: http://127.0.0.1:3001 (use `GRAFANA_USER` / `GRAFANA_PASSWORD` from your `.env`)
 
 6. **Document Backup Procedures** (P1)
    - Create `scripts/backup.sh`
@@ -489,8 +489,8 @@ Total: < 1% CPU, ~650MB RAM
 ### Services
 - **mem0 API:** http://127.0.0.1:8888
 - **API Docs:** http://127.0.0.1:8888/docs
-- **Grafana:** http://127.0.0.1:3001 (admin/admin)
-- **Neo4j:** http://127.0.0.1:7475 (neo4j/mem0_neo4j_pass)
+- **Grafana:** http://127.0.0.1:3001 (use `GRAFANA_USER` / `GRAFANA_PASSWORD` from your `.env`)
+- **Neo4j:** http://127.0.0.1:7475 (use `neo4j/$NEO4J_PASSWORD`)
 
 ### API Authentication
 ```bash
@@ -508,7 +508,7 @@ docker exec -it mem0_postgres psql -U mem0_user -d mem0
 # Neo4j (via browser)
 # URL: http://127.0.0.1:7475
 # Connect: bolt://localhost:7688
-# Auth: neo4j / mem0_neo4j_pass
+# Auth: neo4j / $NEO4J_PASSWORD
 ```
 
 ### File Locations

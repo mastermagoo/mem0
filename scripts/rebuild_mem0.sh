@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # Rebuild mem0 Container from Scratch
-# Location: /Volumes/Data/ai_projects/intel-system/deployment/docker/mem0_tailscale/rebuild_mem0.sh
+# Location: repo root (this repository)
 #
 
 set -e  # Exit on error
@@ -87,8 +87,8 @@ echo ""
 echo "Next steps to deploy the new image:"
 echo ""
 echo "1. Start the container:"
-echo "   cd /Volumes/Data/ai_projects/intel-system/deployment/docker/mem0_tailscale"
-echo "   docker-compose -f docker-compose.prd.yml up -d mem0"
+echo "   cd /Volumes/Data/ai_projects/mem0-system"
+echo "   docker compose -f docker-compose.prd.yml up -d mem0"
 echo ""
 echo "2. Verify it's running:"
 echo "   docker ps --filter 'name=mem0_server_prd'"

@@ -7,7 +7,7 @@ docker compose ps
 
 ## Access Points
 - **API Documentation:** http://localhost:8888/docs
-- **Grafana Dashboard:** http://localhost:3001 (admin/admin)
+- **Grafana Dashboard:** http://localhost:3001 (use `GRAFANA_USER` / `GRAFANA_PASSWORD` from your `.env`)
 - **Neo4j Browser:** http://localhost:7475 (neo4j/intel123)
 - **PostgreSQL:** localhost:5433 (mem0_user/hell0_007)
 

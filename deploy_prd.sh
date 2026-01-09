@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # Production Deployment Script for mem0
-# Location: /Volumes/Data/ai_projects/intel-system/deployment/docker/mem0_tailscale/deploy_prd.sh
+# Location: repo root (this repository)
 #
 # MANDATORY: This script MUST be used for all production deployments
 # FORBIDDEN: Direct docker-compose commands in production
@@ -75,14 +75,21 @@ validate_environment() {
         exit 1
     fi
 
-    # Check required credentials present (OPENAI_API_KEY no longer required - Ollama-only mode)
-    local required_vars=("POSTGRES_PASSWORD" "MEM0_API_KEY" "GRAFANA_PASSWORD")
+    # Check required credentials present
+    # NOTE:
+    # - OPENAI_API_KEY is optional in Ollama-only mode.
+    # - TELEGRAM_BOT_TOKEN is only required if you enable the `telegram` profile.
+    local required_vars=("POSTGRES_PASSWORD" "NEO4J_PASSWORD" "MEM0_API_KEY" "GRAFANA_PASSWORD")
     for var in "${required_vars[@]}"; do
         if ! grep -q "^${var}=" "$ENV_FILE"; then
             print_error "Required variable not found in $ENV_FILE: $var"
             exit 1
         fi
     done
+
+    if ! grep -q "^TELEGRAM_BOT_TOKEN=" "$ENV_FILE"; then
+        print_warning "TELEGRAM_BOT_TOKEN not set in $ENV_FILE (telegram bot profile will not work)"
+    fi
 
     print_success "Environment validation passed"
 }
@@ -102,7 +109,7 @@ deploy_up() {
     print_info "Deploying mem0 production stack..."
     print_warning "This will affect: intel-sys, wingman, cv-automation, accounting"
 
-    docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d
+    docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d
 
     echo ""
     print_success "Deployment initiated"
@@ -127,7 +134,7 @@ deploy_down() {
     print_warning "Stopping mem0 production stack..."
     print_warning "This will affect: intel-sys, wingman, cv-automation, accounting"
 
-    docker-compose -f "$COMPOSE_FILE" down
+    docker compose -f "$COMPOSE_FILE" down
 
     print_success "Services stopped"
 }
@@ -138,7 +145,7 @@ deploy_restart() {
 
     print_info "Restarting mem0 production stack..."
 
-    docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" restart
+    docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" restart
 
     echo ""
     print_success "Services restarted"
@@ -152,10 +159,10 @@ show_logs() {
 
     if [ -z "$service" ]; then
         print_info "Showing logs for all services (last 50 lines)..."
-        docker-compose -f "$COMPOSE_FILE" logs --tail=50
+        docker compose -f "$COMPOSE_FILE" logs --tail=50
     else
         print_info "Showing logs for $service (last 50 lines)..."
-        docker-compose -f "$COMPOSE_FILE" logs --tail=50 "$service"
+        docker compose -f "$COMPOSE_FILE" logs --tail=50 "$service"
     fi
 }
 

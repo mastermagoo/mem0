@@ -1,6 +1,6 @@
 #!/bin/bash
 # Namespace Setup Script
-# Location: /Volumes/intel-system/deployment/docker/mem0_tailscale/setup_namespaces.sh
+# Location: repo root (this repository)
 # Purpose: Apply namespace isolation to PostgreSQL and Neo4j databases
 # Usage: ./setup_namespaces.sh
 
@@ -15,9 +15,30 @@ NC='\033[0m' # No Color
 
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-POSTGRES_CONTAINER="mem0_postgres"
-NEO4J_CONTAINER="mem0_neo4j"
-MEM0_CONTAINER="mem0_server"
+
+# Determine environment and container names
+DEPLOYMENT_ENV="${DEPLOYMENT_ENV:-}"
+if [ -z "$DEPLOYMENT_ENV" ]; then
+    echo -e "${RED}Error: DEPLOYMENT_ENV is required (test|prd)${NC}"
+    exit 1
+fi
+
+case "$DEPLOYMENT_ENV" in
+  prd|prod|production)
+    ENV_SUFFIX="prd"
+    ;;
+  test)
+    ENV_SUFFIX="test"
+    ;;
+  *)
+    echo -e "${RED}Error: Unsupported DEPLOYMENT_ENV: $DEPLOYMENT_ENV (expected test|prd)${NC}"
+    exit 1
+    ;;
+esac
+
+POSTGRES_CONTAINER="${POSTGRES_CONTAINER:-mem0_postgres_${ENV_SUFFIX}}"
+NEO4J_CONTAINER="${NEO4J_CONTAINER:-mem0_neo4j_${ENV_SUFFIX}}"
+MEM0_CONTAINER="${MEM0_CONTAINER:-mem0_server_${ENV_SUFFIX}}"
 
 # Load environment variables
 if [ -f "$SCRIPT_DIR/.env" ]; then
@@ -108,7 +129,7 @@ echo "Waiting for Neo4j to be ready..."
 sleep 5
 
 # Apply Neo4j schema
-docker exec -i "$NEO4J_CONTAINER" cypher-shell -u neo4j -p "${NEO4J_PASSWORD:-mem0_neo4j_pass}" <<'EOF'
+docker exec -i "$NEO4J_CONTAINER" cypher-shell -u neo4j -p "${NEO4J_PASSWORD:?NEO4J_PASSWORD is required}" <<'EOF'
 // Create constraints
 CREATE CONSTRAINT mem_namespace_required IF NOT EXISTS
 FOR (m:Memory)
@@ -164,7 +185,7 @@ fi
 
 # Check Neo4j
 echo "Checking Neo4j..."
-NEO4J_CHECK=$(docker exec "$NEO4J_CONTAINER" cypher-shell -u neo4j -p "${NEO4J_PASSWORD:-mem0_neo4j_pass}" "SHOW CONSTRAINTS" 2>/dev/null | grep -c "mem_namespace_required" || echo "0")
+NEO4J_CHECK=$(docker exec "$NEO4J_CONTAINER" cypher-shell -u neo4j -p "${NEO4J_PASSWORD:?NEO4J_PASSWORD is required}" "SHOW CONSTRAINTS" 2>/dev/null | grep -c "mem_namespace_required" || echo "0")
 
 if [ "$NEO4J_CHECK" -ge "1" ]; then
     echo -e "${GREEN}✓ Neo4j namespace constraints exist${NC}"

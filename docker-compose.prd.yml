@@ -22,10 +22,10 @@ services:
     ports:
       - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     networks:
-      - mem0_internal
+      - mem0_internal_prd
     labels:
-      - "com.intel-system.compose-file=docker-compose.prd.yml"
-      - "com.intel-system.environment=production"
+      - "com.mem0-system.compose-file=docker-compose.prd.yml"
+      - "com.mem0-system.environment=production"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mem0_user_prd}"]
       interval: 10s
@@ -38,7 +38,7 @@ services:
         max-file: "3"
 
   mem0:
-    image: mem0-fixed:local
+    image: ${MEM0_IMAGE:-mem0-fixed:local}
     container_name: mem0_server_prd
     restart: unless-stopped
     depends_on:
@@ -66,18 +66,18 @@ services:
       HISTORY_DB_PATH: /app/data/history.db
       ENVIRONMENT: prd
       DEPLOYMENT_ENV: ${DEPLOYMENT_ENV:?Must set DEPLOYMENT_ENV=prd in .env}
-    command: ["/bin/bash", "/app/start_mem0_with_patch.sh"]
+    command: ["/bin/bash", "/app/start_mem0_openai.sh"]
     volumes:
       - ${MEM0_DATA_ROOT:-/Volumes/NAS/mem0-prd}/data:/app/data
-      - ./mem0_gds_patch_v2.py:/app/mem0_gds_patch_v2.py:ro
-      - ./start_mem0_with_patch.sh:/app/start_mem0_with_patch.sh:ro
+      - ./lib/mem0_gds_patch_v2_simple.py:/app/mem0_gds_patch_v2.py:ro
+      - ./scripts/start_mem0_openai.sh:/app/start_mem0_openai.sh:ro
     ports:
       - "127.0.0.1:${MEM0_PORT:-8888}:8888"
     networks:
-      - mem0_internal
+      - mem0_internal_prd
     labels:
-      - "com.intel-system.compose-file=docker-compose.prd.yml"
-      - "com.intel-system.environment=production"
+      - "com.mem0-system.compose-file=docker-compose.prd.yml"
+      - "com.mem0-system.environment=production"
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8888/docs"]
       interval: 15s
@@ -109,10 +109,10 @@ services:
       - ${MEM0_DATA_ROOT:-/Volumes/NAS/mem0-prd}/neo4j/import:/var/lib/neo4j/import
       - ${MEM0_DATA_ROOT:-/Volumes/NAS/mem0-prd}/neo4j/plugins:/plugins
     networks:
-      - mem0_internal
+      - mem0_internal_prd
     labels:
-      - "com.intel-system.compose-file=docker-compose.prd.yml"
-      - "com.intel-system.environment=production"
+      - "com.mem0-system.compose-file=docker-compose.prd.yml"
+      - "com.mem0-system.environment=production"
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:7474 || exit 1"]
       interval: 10s
@@ -141,10 +141,10 @@ services:
     volumes:
       - ${MEM0_DATA_ROOT:-/Volumes/NAS/mem0-prd}/grafana:/var/lib/grafana
     networks:
-      - mem0_internal
+      - mem0_internal_prd
     labels:
-      - "com.intel-system.compose-file=docker-compose.prd.yml"
-      - "com.intel-system.environment=production"
+      - "com.mem0-system.compose-file=docker-compose.prd.yml"
+      - "com.mem0-system.environment=production"
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://127.0.0.1:3000/api/health || exit 1"]
       interval: 30s
@@ -167,17 +167,18 @@ services:
         condition: service_healthy
     environment:
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:?TELEGRAM_BOT_TOKEN is required}
-      MEM0_URL: http://mem0_server_prd:${MEM0_INTERNAL_PORT:-8888}
+      # Safety: always target the internal service name on the compose network
+      MEM0_URL: http://mem0:8888
       MEM0_API_KEY: ${MEM0_API_KEY:?MEM0_API_KEY is required}
-      DEFAULT_NAMESPACE: personal
-      USER_PREFIX: mark_carey
-      MAX_RECALL_RESULTS: "5"
+      DEFAULT_NAMESPACE: ${DEFAULT_NAMESPACE:-sap}
+      USER_PREFIX: ${USER_PREFIX:-mark_carey}
+      MAX_RECALL_RESULTS: ${MAX_RECALL_RESULTS:-5}
       DEPLOYMENT_ENV: ${DEPLOYMENT_ENV:?Must set DEPLOYMENT_ENV=prd in .env}
     networks:
-      - mem0_internal
+      - mem0_internal_prd
     labels:
-      - "com.intel-system.compose-file=docker-compose.prd.yml"
-      - "com.intel-system.environment=production"
+      - "com.mem0-system.compose-file=docker-compose.prd.yml"
+      - "com.mem0-system.environment=production"
     logging:
       driver: "json-file"
       options:
@@ -185,7 +186,7 @@ services:
         max-file: "3"
 
 networks:
-  mem0_internal:
+  mem0_internal_prd:
     driver: bridge
-    name: mem0_internal
-    external: true
+    name: mem0_internal_prd
+    external: false

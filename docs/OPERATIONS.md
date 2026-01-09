@@ -242,6 +242,23 @@ docker-compose up -d
 
 ---
 
+## DR Runbook (Wingman-gated approvals)
+
+Updating existing guide instead of creating new version
+
+### Required approvals (Wingman)
+
+- **Gate A — Pre-DR readiness**: Wingman confirms current PRD state snapshot + rollback readiness
+- **Gate B — Pre-teardown**: Wingman approves stopping/removing PRD containers
+- **Gate C — Post-cold-start validation**: Wingman confirms API/DB/Neo4j/Grafana checks pass
+- **Gate D — Telegram E2E**: Wingman confirms Telegram bots respond in both TEST and PRD
+
+### Telegram validation requirements
+
+- **Wingman Telegram (TEST/PRD)**: confirm bot can reach Wingman API `/health` from its container network and is polling (logs show “authorized” and no crash loops).
+- **mem0 Telegram (TEST/PRD)**: run with compose profile `telegram` and confirm `/start`, `/remember`, and `/recall` succeed end-to-end.
+
+
 ## Monitoring
 
 ### Prometheus Metrics
@@ -337,7 +354,7 @@ curl http://localhost:9090/api/v1/targets | jq '.data.activeTargets[] | select(.
 #### Importing the Dashboard
 
 1. Access Grafana at http://localhost:3001 (or your Grafana port)
-2. Login with credentials (default: admin/admin)
+2. Login with credentials (`GRAFANA_USER` / `GRAFANA_PASSWORD` from your `.env`)
 3. Navigate to **Dashboards** → **Import**
 4. Upload `/Volumes/intel-system/deployment/scripts/mem0_grafana_dashboard.json`
 5. Select your Prometheus datasource

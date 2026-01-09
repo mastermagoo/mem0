@@ -67,7 +67,7 @@ df -h
 #### Diagnosis
 ```bash
 # Test Neo4j connectivity
-docker exec mem0_neo4j_prd cypher-shell -u neo4j -p mem0_neo4j_pass "CALL gds.version()"
+docker exec mem0_neo4j_prd cypher-shell -u neo4j -p "$NEO4J_PASSWORD" "CALL gds.version()"
 
 # Check Neo4j logs
 docker compose --env-file mem0.env logs mem0_neo4j_prd
@@ -177,7 +177,7 @@ docker volume prune -f
 docker exec mem0_postgres_prd psql -U mem0_user -d mem0 -c "VACUUM ANALYZE;"
 
 # Optimize Neo4j
-docker exec mem0_neo4j_prd cypher-shell -u neo4j -p mem0_neo4j_pass "CALL apoc.periodic.commit('MATCH (n) RETURN count(n) LIMIT 1000', 'MATCH (n) WITH n LIMIT 1000 DETACH DELETE n RETURN count(n)');"
+docker exec mem0_neo4j_prd cypher-shell -u neo4j -p "$NEO4J_PASSWORD" "CALL apoc.periodic.commit('MATCH (n) RETURN count(n) LIMIT 1000', 'MATCH (n) WITH n LIMIT 1000 DETACH DELETE n RETURN count(n)');"
 ```
 
 ### Issue 5: Grafana Access Problems
@@ -213,7 +213,7 @@ docker compose --env-file mem0.env restart mem0_grafana_prd
 **Authentication Issues:**
 ```bash
 # Reset Grafana admin password
-docker exec mem0_grafana_prd grafana-cli admin reset-admin-password admin
+docker exec mem0_grafana_prd grafana-cli admin reset-admin-password \"$GRAFANA_PASSWORD\"
 ```
 
 ### Issue 6: Telegram Bot Problems
@@ -271,7 +271,7 @@ echo "mem0 API:"
 curl -s http://localhost:8888/health | jq .
 
 echo "Neo4j GDS:"
-docker exec mem0_neo4j_prd cypher-shell -u neo4j -p mem0_neo4j_pass "CALL gds.version()" 2>/dev/null || echo "Neo4j GDS not available"
+docker exec mem0_neo4j_prd cypher-shell -u neo4j -p "$NEO4J_PASSWORD" "CALL gds.version()" 2>/dev/null || echo "Neo4j GDS not available"
 
 echo "PostgreSQL:"
 docker exec mem0_postgres_prd psql -U mem0_user -d mem0 -c "SELECT version();" 2>/dev/null || echo "PostgreSQL not available"

@@ -58,7 +58,7 @@ git clone https://github.com/mastermagoo/mem0-production.git
 cd mem0-production
 
 # Create environment file from example
-cp .env.example .env
+cp env.example .env
 
 # Edit .env with your configuration
 nano .env
@@ -66,6 +66,10 @@ nano .env
 # Deploy to production
 ./deploy_prd.sh up
 ```
+
+## 🤖 CLAUDE rules
+
+See `CLAUDE.md` for the repo’s non-negotiable operational/security rules and Wingman-gated DR stages.
 
 ### Verify Deployment
 
@@ -140,13 +144,13 @@ Grafana dashboards for:
 - Database performance
 - Error rates
 
-Access: http://localhost:3001 (default: admin/admin)
+Access: http://localhost:3001 (use `GRAFANA_USER` / `GRAFANA_PASSWORD` from your `.env`)
 
 ## 🔧 Configuration
 
 ### Environment Variables
 
-Create `.env` from `.env.example` and configure:
+Create `.env` from `env.example` and configure:
 
 ```bash
 # Deployment Environment
@@ -261,7 +265,7 @@ python test_ollama_enforcement.py
 ```
 mem0-production/
 ├── README.md                      # This file
-├── .env.example                   # Environment template
+├── env.example                    # Environment template
 ├── .gitignore                     # Git exclusions
 ├── LICENSE                        # MIT License
 │

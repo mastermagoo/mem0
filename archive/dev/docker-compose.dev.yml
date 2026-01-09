@@ -1,5 +1,3 @@
-version: "3.9"
-
 # Development environment configuration
 # Environment: DEV
 # Hardware: MacBook Pro (developer laptop)
@@ -16,7 +14,7 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-mem0_dev}
       POSTGRES_USER: ${POSTGRES_USER:-mem0_user_dev}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dev_password_123}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
     volumes:
       - ${MEM0_DATA_ROOT:-~/mem0-dev}/postgres:/var/lib/postgresql/data
     ports:
@@ -42,9 +40,10 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER:-mem0_user_dev}:${POSTGRES_PASSWORD:-dev_password_123}@postgres:5432/${POSTGRES_DB:-mem0_dev}}
+      # Security: require explicit credentials (no hard-coded defaults)
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
       OPENAI_API_KEY: ${OPENAI_API_KEY:?OPENAI_API_KEY is required}
-      MEM0_API_KEY: ${MEM0_API_KEY:-dev-api-key-12345}
+      MEM0_API_KEY: ${MEM0_API_KEY:?MEM0_API_KEY is required}
       MEM0_BIND_ADDRESS: 0.0.0.0
       MEM0_PORT: 8888
       ENVIRONMENT: dev
@@ -72,7 +71,7 @@ services:
     restart: unless-stopped
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
-      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:?GRAFANA_PASSWORD is required}
       GF_SERVER_ROOT_URL: http://localhost:3000
       GF_ANALYTICS_REPORTING_ENABLED: "false"
       GF_ANALYTICS_CHECK_FOR_UPDATES: "false"

@@ -56,7 +56,7 @@ ls -la mem0.env docker-compose.yml
 # Neo4j (Local)
 NEO4J_URI=bolt://neo4j:7687
 NEO4J_USER=neo4j
-NEO4J_PASSWORD=mem0_neo4j_pass
+NEO4J_PASSWORD=REPLACE_ME
 
 # PostgreSQL (Local)
 POSTGRES_HOST=postgres
@@ -120,12 +120,12 @@ mem0_telegram_bot_prd    Up
 #### Test 1: Neo4j GDS Functions
 ```bash
 # Test GDS plugin installation
-docker exec mem0_neo4j_prd cypher-shell -u neo4j -p mem0_neo4j_pass "CALL gds.version()"
+docker exec mem0_neo4j_prd cypher-shell -u neo4j -p "$NEO4J_PASSWORD" "CALL gds.version()"
 
 # Expected output: "2.6.9"
 
 # Test similarity functions
-docker exec mem0_neo4j_prd cypher-shell -u neo4j -p mem0_neo4j_pass "RETURN gds.similarity.cosine([1.0, 2.0], [1.0, 2.0])"
+docker exec mem0_neo4j_prd cypher-shell -u neo4j -p "$NEO4J_PASSWORD" "RETURN gds.similarity.cosine([1.0, 2.0], [1.0, 2.0])"
 
 # Expected output: 1.0
 ```
@@ -154,7 +154,7 @@ curl http://localhost:8888/docs
 # Access Grafana
 open http://localhost:3001
 
-# Login: admin/admin
+# Login: use `GRAFANA_USER` / `GRAFANA_PASSWORD` from your `.env`
 # Check for mem0 dashboards
 ```
 
@@ -186,7 +186,7 @@ neo4j:
   image: neo4j:5.13.0
   container_name: mem0_neo4j_prd
   environment:
-    NEO4J_AUTH: neo4j/mem0_neo4j_pass
+    NEO4J_AUTH: neo4j/${NEO4J_PASSWORD}
     NEO4J_PLUGINS: '["graph-data-science"]'
     NEO4J_dbms_security_procedures_unrestricted: gds.*
   networks:
@@ -267,7 +267,7 @@ curl -X GET http://localhost:8888/memories?user_id=test_user
 
 ### Grafana Monitoring
 - **URL**: http://localhost:3001
-- **Login**: admin/admin
+- **Login**: use `GRAFANA_USER` / `GRAFANA_PASSWORD` from your `.env`
 - **Dashboards**: System metrics, Neo4j performance, PostgreSQL stats
 
 ## 🚨 Troubleshooting
@@ -302,7 +302,7 @@ docker compose --env-file mem0.env restart [service_name]
 #### Issue 3: Neo4j Connection Issues
 ```bash
 # Test Neo4j connectivity
-docker exec mem0_neo4j_prd cypher-shell -u neo4j -p mem0_neo4j_pass "CALL gds.version()"
+docker exec mem0_neo4j_prd cypher-shell -u neo4j -p "$NEO4J_PASSWORD" "CALL gds.version()"
 
 # Check Neo4j logs
 docker compose --env-file mem0.env logs neo4j

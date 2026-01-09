@@ -204,7 +204,7 @@ curl -X POST http://localhost:8888/memories \
   -d '{"messages": [{"role": "user", "content": "test memory"}], "user_id": "test"}'
 
 # Test Neo4j GDS
-docker exec mem0_neo4j_prd cypher-shell -u neo4j -p mem0_neo4j_pass "CALL gds.version()"
+docker exec mem0_neo4j_prd cypher-shell -u neo4j -p "$NEO4J_PASSWORD" "CALL gds.version()"
 ```
 
 ## 📚 Documentation Created
