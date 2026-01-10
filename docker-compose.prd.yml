@@ -18,7 +18,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       DEPLOYMENT_ENV: ${DEPLOYMENT_ENV:?Must set DEPLOYMENT_ENV=prd in .env}
     volumes:
-      - ${MEM0_DATA_ROOT:-/Volumes/NAS/mem0-prd}/postgres:/var/lib/postgresql/data
+      - mem0_prd_postgres_data:/var/lib/postgresql/data
     ports:
       - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     networks:
@@ -68,7 +68,7 @@ services:
       DEPLOYMENT_ENV: ${DEPLOYMENT_ENV:?Must set DEPLOYMENT_ENV=prd in .env}
     command: ["/bin/bash", "/app/start_mem0_openai.sh"]
     volumes:
-      - ${MEM0_DATA_ROOT:-/Volumes/NAS/mem0-prd}/data:/app/data
+      - mem0_prd_data:/app/data
       - ./lib/mem0_gds_patch_v2_simple.py:/app/mem0_gds_patch_v2.py:ro
       - ./scripts/start_mem0_openai.sh:/app/start_mem0_openai.sh:ro
     ports:
@@ -104,10 +104,10 @@ services:
       - "127.0.0.1:${NEO4J_HTTP_PORT:-7474}:7474"
       - "127.0.0.1:${NEO4J_BOLT_PORT:-7687}:7687"
     volumes:
-      - ${MEM0_DATA_ROOT:-/Volumes/NAS/mem0-prd}/neo4j:/data
-      - ${MEM0_DATA_ROOT:-/Volumes/NAS/mem0-prd}/neo4j/logs:/logs
-      - ${MEM0_DATA_ROOT:-/Volumes/NAS/mem0-prd}/neo4j/import:/var/lib/neo4j/import
-      - ${MEM0_DATA_ROOT:-/Volumes/NAS/mem0-prd}/neo4j/plugins:/plugins
+      - mem0_prd_neo4j_data:/data
+      - mem0_prd_neo4j_logs:/logs
+      - mem0_prd_neo4j_import:/var/lib/neo4j/import
+      - mem0_prd_neo4j_plugins:/plugins
     networks:
       - mem0_internal_prd
     labels:
@@ -139,7 +139,7 @@ services:
     ports:
       - "127.0.0.1:${GRAFANA_PORT:-3000}:3000"
     volumes:
-      - ${MEM0_DATA_ROOT:-/Volumes/NAS/mem0-prd}/grafana:/var/lib/grafana
+      - mem0_prd_grafana:/var/lib/grafana
     networks:
       - mem0_internal_prd
     labels:
@@ -184,6 +184,19 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
+volumes:
+  mem0_prd_postgres_data:
+    external: true
+    name: mem0_tailscale-data_prd
+  mem0_prd_data:
+    external: true
+    name: mem0_tailscale_mem0_data
+  mem0_prd_neo4j_data:
+  mem0_prd_neo4j_logs:
+  mem0_prd_neo4j_import:
+  mem0_prd_neo4j_plugins:
+  mem0_prd_grafana:
 
 networks:
   mem0_internal_prd:

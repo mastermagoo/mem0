@@ -1,6 +1,6 @@
 """
 Namespace API Endpoints
-Location: /Volumes/intel-system/deployment/docker/mem0_tailscale/namespace_api.py
+Location: /Volumes/Data/ai_projects/mem0-system/lib/namespace_api.py
 Purpose: FastAPI endpoints for namespace management
 Scope: REST API for listing, switching, and managing namespaces
 

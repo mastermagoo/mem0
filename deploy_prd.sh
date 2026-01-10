@@ -97,7 +97,7 @@ validate_environment() {
 # Function: Check if containers are running
 check_status() {
     print_info "Checking container status..."
-    docker ps --filter "label=com.intel-system.environment=production" \
+    docker ps --filter "label=com.mem0-system.environment=production" \
               --filter "name=mem0" \
               --format "table {{.Names}}\t{{.Status}}\t{{.Image}}"
 }
@@ -184,7 +184,7 @@ validate_deployment() {
     done
 
     # Check containers have correct labels
-    local label_count=$(docker ps --filter "label=com.intel-system.compose-file=docker-compose.prd.yml" | wc -l)
+    local label_count=$(docker ps --filter "label=com.mem0-system.compose-file=docker-compose.prd.yml" | wc -l)
     if [ "$label_count" -gt 1 ]; then
         print_success "Containers have correct deployment labels"
     else

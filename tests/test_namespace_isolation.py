@@ -1,6 +1,6 @@
 """
 Namespace Isolation Testing
-Location: /Volumes/intel-system/deployment/docker/mem0_tailscale/test_namespace_isolation.py
+Location: /Volumes/Data/ai_projects/mem0-system/tests/test_namespace_isolation.py
 Purpose: Comprehensive tests for namespace isolation
 Scope: Verifies zero memory leakage between namespaces
 

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Location: /Volumes/intel-system/deployment/docker/mem0_tailscale/rollback-week1.sh
+# Location: /Volumes/Data/ai_projects/mem0-system/scripts/rollback-week1.sh
 # Purpose: Emergency rollback script for Week 1 mem0/tailscale fixes
 # Scope: Restores .env and docker-compose.yml from backups, restarts services
 
@@ -9,7 +9,7 @@ echo "🔄 Rolling back Week 1 fixes..."
 echo "=================================================="
 
 # Change to mem0_tailscale directory
-cd /Volumes/intel-system/deployment/docker/mem0_tailscale
+cd /Volumes/Data/ai_projects/mem0-system
 
 # Find most recent backups (excluding literal $(date) filenames)
 ENV_BACKUP=$(ls -t .env.backup-20* 2>/dev/null | head -1)

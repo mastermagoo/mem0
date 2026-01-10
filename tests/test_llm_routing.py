@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Test LLM Routing - Local-First Strategy
-Location: /Volumes/intel-system/deployment/docker/mem0_tailscale/test_llm_routing.py
+Location: /Volumes/Data/ai_projects/mem0-system/tests/test_llm_routing.py
 Purpose: Test and benchmark the LLM router with various query types
 """
 

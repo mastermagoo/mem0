@@ -78,7 +78,7 @@ PREREQUISITES:
     4. curl installed for API verification
 
 For detailed instructions, see:
-    /Volumes/intel-system/ai-workers/results/week-1-security/workers-41-45/OPENAI_KEY_ROTATION_GUIDE.md
+    See docs/archive/ for key rotation guides
 EOF
     exit 0
 }

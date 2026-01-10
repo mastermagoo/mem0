@@ -1,6 +1,6 @@
 """
 Namespace Manager - Multi-Context Memory Isolation
-Location: /Volumes/intel-system/deployment/docker/mem0_tailscale/namespace_manager.py
+Location: /Volumes/Data/ai_projects/mem0-system/lib/namespace_manager.py
 Purpose: Thread-safe namespace context management for isolated memory contexts
 Scope: Provides namespace switching, validation, and context management for 5 life contexts
 """

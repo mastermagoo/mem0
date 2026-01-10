@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 LLM Router for mem0 - Local-First Strategy
-Location: /Volumes/intel-system/deployment/docker/mem0_tailscale/llm_router.py
+Location: /Volumes/Data/ai_projects/mem0-system/lib/llm_router.py
 Purpose: Route mem0 LLM queries to local Ollama models (95%) with OpenAI fallback (5%)
 Scope: Cost optimization - Target $0/month baseline by using local LLMs
 
