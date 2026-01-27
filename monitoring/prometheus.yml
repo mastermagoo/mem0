@@ -12,3 +12,8 @@ scrape_configs:
     static_configs:
       - targets: ['mem0_ollama_exporter:9092']
     scrape_interval: 15s
+
+  - job_name: 'postgres_memory_metrics'
+    static_configs:
+      - targets: ['mem0_postgres_exporter:9094']
+    scrape_interval: 30s  # Check memory count every 30 seconds

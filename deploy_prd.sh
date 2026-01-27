@@ -122,7 +122,11 @@ deploy_up() {
     print_info "Verifying health endpoints..."
     sleep 5
 
-    if curl -fsS http://localhost:8888/health > /dev/null 2>&1; then
+    # Get MEM0_PORT from .env (default 8889)
+    MEM0_PORT=$(grep "^MEM0_PORT=" "$ENV_FILE" | cut -d'=' -f2 | tr -d ' ')
+    MEM0_PORT=${MEM0_PORT:-8889}
+
+    if curl -fsS "http://localhost:${MEM0_PORT}/health" > /dev/null 2>&1; then
         print_success "mem0 API is healthy"
     else
         print_warning "mem0 API not responding yet (may need more time)"
@@ -204,7 +208,11 @@ validate_deployment() {
     fi
 
     # Check API health
-    if curl -fsS http://localhost:8888/health > /dev/null 2>&1; then
+    # Get MEM0_PORT from .env (default 8889)
+    MEM0_PORT=$(grep "^MEM0_PORT=" "$ENV_FILE" | cut -d'=' -f2 | tr -d ' ')
+    MEM0_PORT=${MEM0_PORT:-8889}
+
+    if curl -fsS "http://localhost:${MEM0_PORT}/health" > /dev/null 2>&1; then
         print_success "mem0 API health check passed"
     else
         print_warning "mem0 API health check failed (may need more startup time)"

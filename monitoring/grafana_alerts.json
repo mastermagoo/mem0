@@ -1,0 +1,213 @@
+{
+  "alerts": [
+    {
+      "uid": "mem0_memory_count_zero",
+      "title": "mem0: Memory Count is ZERO (CRITICAL)",
+      "condition": "mem0_memory_total == 0",
+      "datasource": "Prometheus",
+      "expression": "mem0_memory_total",
+      "for": "2m",
+      "annotations": {
+        "description": "🚨 CRITICAL: mem0 memory count has dropped to ZERO. This indicates complete data loss. Immediate restoration from backup required.",
+        "summary": "mem0 has no memories stored (count = 0)"
+      },
+      "labels": {
+        "severity": "critical",
+        "component": "mem0",
+        "alert_type": "data_loss"
+      },
+      "noDataState": "alerting",
+      "execErrState": "alerting"
+    },
+    {
+      "uid": "mem0_memory_count_drop_50pct",
+      "title": "mem0: Memory Count Dropped >50% (WARNING)",
+      "condition": "mem0_memory_drop_percentage > 0.5",
+      "datasource": "Prometheus",
+      "expression": "mem0_memory_drop_percentage",
+      "for": "5m",
+      "annotations": {
+        "description": "⚠️ WARNING: mem0 memory count has dropped by more than 50% from the previous count. This may indicate partial data loss or a container recreation event.",
+        "summary": "mem0 memory count dropped significantly"
+      },
+      "labels": {
+        "severity": "warning",
+        "component": "mem0",
+        "alert_type": "data_degradation"
+      },
+      "noDataState": "noData",
+      "execErrState": "alerting"
+    },
+    {
+      "uid": "mem0_database_down",
+      "title": "mem0: PostgreSQL Database Unreachable (CRITICAL)",
+      "condition": "mem0_database_up == 0",
+      "datasource": "Prometheus",
+      "expression": "mem0_database_up",
+      "for": "1m",
+      "annotations": {
+        "description": "🚨 CRITICAL: mem0 PostgreSQL database is unreachable. Memory queries will fail. Check container status and network connectivity.",
+        "summary": "mem0 PostgreSQL database is down"
+      },
+      "labels": {
+        "severity": "critical",
+        "component": "postgresql",
+        "alert_type": "service_down"
+      },
+      "noDataState": "alerting",
+      "execErrState": "alerting"
+    },
+    {
+      "uid": "mem0_memory_count_below_baseline",
+      "title": "mem0: Memory Count Below Baseline (INFO)",
+      "condition": "mem0_memory_total < 1900",
+      "datasource": "Prometheus",
+      "expression": "mem0_memory_total",
+      "for": "10m",
+      "annotations": {
+        "description": "ℹ️ INFO: mem0 memory count ({{$value}}) is below expected baseline of 1,968 memories. This may be normal if memories were intentionally deleted, but should be investigated.",
+        "summary": "mem0 memory count below expected baseline"
+      },
+      "labels": {
+        "severity": "info",
+        "component": "mem0",
+        "alert_type": "baseline_drift"
+      },
+      "noDataState": "noData",
+      "execErrState": "noData"
+    }
+  ],
+  "notification_channels": [
+    {
+      "name": "Telegram",
+      "type": "telegram",
+      "settings": {
+        "bottoken": "${TELEGRAM_BOT_TOKEN}",
+        "chatid": "${TELEGRAM_CHAT_ID}"
+      },
+      "sendReminder": true,
+      "frequency": "1h",
+      "disableResolveMessage": false
+    }
+  ],
+  "dashboard_panels": [
+    {
+      "title": "Memory Count Over Time",
+      "type": "graph",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "mem0_memory_total",
+          "legendFormat": "Total Memories"
+        }
+      ],
+      "yaxes": [
+        {
+          "label": "Count",
+          "format": "short",
+          "min": 0
+        }
+      ],
+      "alert": {
+        "name": "Memory Count Zero Alert",
+        "conditions": [
+          {
+            "evaluator": {
+              "params": [0],
+              "type": "lt"
+            },
+            "operator": {
+              "type": "and"
+            },
+            "query": {
+              "params": ["A", "5m", "now"]
+            },
+            "reducer": {
+              "params": [],
+              "type": "last"
+            },
+            "type": "query"
+          }
+        ],
+        "executionErrorState": "alerting",
+        "for": "2m",
+        "frequency": "1m",
+        "handler": 1,
+        "message": "🚨 CRITICAL: mem0 memory count is ZERO! Immediate investigation required.",
+        "name": "mem0 Memory Count Zero",
+        "noDataState": "alerting",
+        "notifications": []
+      }
+    },
+    {
+      "title": "Memory Count by Namespace",
+      "type": "graph",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "mem0_memory_count",
+          "legendFormat": "{{namespace}}"
+        }
+      ],
+      "yaxes": [
+        {
+          "label": "Count",
+          "format": "short",
+          "min": 0
+        }
+      ]
+    },
+    {
+      "title": "Memory Drop Percentage",
+      "type": "singlestat",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "mem0_memory_drop_percentage * 100",
+          "legendFormat": "Drop %"
+        }
+      ],
+      "format": "percent",
+      "thresholds": "25,50",
+      "colors": [
+        "#299c46",
+        "#e0b400",
+        "#d44a3a"
+      ]
+    },
+    {
+      "title": "Database Status",
+      "type": "singlestat",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "mem0_database_up",
+          "legendFormat": "Status"
+        }
+      ],
+      "valueMaps": [
+        {
+          "value": "0",
+          "text": "DOWN"
+        },
+        {
+          "value": "1",
+          "text": "UP"
+        }
+      ],
+      "thresholds": "0.5,1",
+      "colors": [
+        "#d44a3a",
+        "#e0b400",
+        "#299c46"
+      ]
+    }
+  ],
+  "setup_instructions": {
+    "step1": "Add Prometheus data source in Grafana (http://prometheus:9090)",
+    "step2": "Import alert rules via Grafana UI: Alerting > Alert Rules > New Alert Rule",
+    "step3": "Configure Telegram notification channel: Alerting > Notification channels > New channel",
+    "step4": "Create dashboard and import panels from dashboard_panels section",
+    "step5": "Test alerts by temporarily stopping PostgreSQL container: docker stop mem0_postgres_prd"
+  }
+}

@@ -1,8 +1,8 @@
 # CLAUDE.md - Mandatory Development Rules
 
-**Repository:** mem0-system  
-**Purpose:** Production mem0 deployment for Mac Studio  
-**Last Updated:** 2026-01-09
+**Repository:** mem0-system
+**Purpose:** Production mem0 deployment for Mac Studio
+**Last Updated:** 2026-01-27
 
 ---
 
@@ -75,7 +75,14 @@
 - Use environment variables in code: `${VAR_NAME:?required}`
 - Use placeholders in examples: `REPLACE_ME` or `your_token_here`
 
-**Violation = IMMEDIATE SECURITY INCIDENT**
+**ALL configuration values MUST:**
+- Use environment variables for ports, URLs, database names
+- NO hardcoded ports (e.g., `localhost:8888`) - use `${MEM0_PORT}`
+- NO hardcoded credentials in connection strings
+- Single source of truth: `.env` file for all config
+- Scripts MUST read from environment or `.env`
+
+**Violation = IMMEDIATE SECURITY INCIDENT / OPERATIONAL FAILURE**
 
 ---
 
@@ -269,8 +276,48 @@ tree -L 1 -d
 
 ---
 
-**Last Major Incident:** 2026-01-03 (reboot outage due to missing auto-start)  
-**Prevention:** Rules 1, 3, 8, 9 established to prevent recurrence
+## 📚 INCIDENT HISTORY & LEARNINGS
+
+### Incident: 2026-01-27 - Complete Data Loss (CRITICAL)
+
+**Summary:** Complete data loss (1,968 memories) due to Docker container recreation with incompatible credentials and embedding model changes. Successfully restored from backup.
+
+**Root Cause:**
+1. Containers recreated on 2026-01-10 with new credentials (mem0_user → mem0_user_prd)
+2. Embedding model switched from OpenAI (1536 dims) to Ollama (768 dims) on 2026-01-07
+3. Result: Fresh empty database created, old data inaccessible
+
+**Contributing Factors:**
+- Hardcoded ports in scripts (localhost:8888 vs actual 8889/18888)
+- Silent sync failures (scripts never connected, no error logging)
+- No data validation in backups (backed up empty database for 17 days)
+- No monitoring alerts (memory count dropped from 1,968 → 0 with no alerts)
+- Insufficient self-healing (only restarted containers, didn't validate data)
+
+**Prevention Measures Implemented:**
+1. ✅ Fixed hardcoded ports in all operational scripts (deploy_prd.sh, rebuild_mem0.sh, etc.)
+2. ✅ Created comprehensive incident documentation (docs/incidents/2026-01-27_DATA_LOSS_RESTORATION.md)
+3. ⏳ Add Grafana alerts for memory count = 0 or drops >50%
+4. ⏳ Add backup validation (verify data before saving)
+5. ⏳ Add automatic restore mechanism for empty database detection
+6. ⏳ Document safe container recreation procedure
+
+**Key Learnings:**
+- **Data-aware monitoring** - Monitor what matters (data), not just containers
+- **Backup validation** - Verify backups contain actual data before overwriting
+- **Configuration management** - Single source of truth for credentials/ports, no hardcoding
+- **Better logging** - Failed connections must log errors and alert
+- **Regular DR testing** - Test restore process monthly, not just backup
+
+**Full Details:** `/Volumes/Data/ai_projects/mem0-system/docs/incidents/2026-01-27_DATA_LOSS_RESTORATION.md`
+
+---
+
+### Incident: 2026-01-03 - Reboot Outage
+
+**Summary:** Auto-start failure after reboot due to missing launchd configuration.
+
+**Prevention:** Rules 1, 3, 8, 9 established; `com.mem0.prd.plist` created for auto-start.
 
 ---
 
