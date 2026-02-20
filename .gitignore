@@ -45,6 +45,7 @@ logs/
 *.backup
 *.bak
 *.bak2
+archive/backups/
 
 # Results and temporary files
 results/
