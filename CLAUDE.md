@@ -1,252 +1,69 @@
-# CLAUDE.md - Mandatory Development Rules
+# CLAUDE.md — Mem0 Core Rules
 
 **Repository:** mem0-system
 **Purpose:** Production mem0 deployment for Mac Studio
-**Last Updated:** 2026-01-27
+**Last Updated:** 2026-02-16 (refactored to modular structure)
 
 ---
 
-## 🚨 CRITICAL RULES - NEVER VIOLATE
+## 🚨 HARD RULES (non-negotiable)
 
-### RULE 1: CLEAN ROOT DIRECTORY (MANDATORY)
+1. **CLEAN ROOT DIRECTORY** — repository root MUST contain ≤ 15 files; NO loose `.py` or `.sh` files (see [file-organization.md](.claude/rules/file-organization.md))
+2. **NO HARDCODED CREDENTIALS** — ALL credentials in `.env` files only; use environment variables everywhere (see [security.md](.claude/rules/security.md))
+3. **ZERO EXTERNAL DEPENDENCIES** — 100% self-contained; NO references to intel-system or wingman-system (see [isolation.md](.claude/rules/isolation.md))
+4. **PROPER FILE ORGANIZATION** — Python in `lib/`, scripts in `scripts/`, docs in `docs/` (see [file-organization.md](.claude/rules/file-organization.md))
+5. **DOCKER LABELS & NAMING** — use `com.mem0-system.*` labels and `mem0_*` container names (see [docker-conventions.md](.claude/rules/docker-conventions.md))
+6. **DOCUMENTATION REQUIREMENTS** — NEVER create files in root; ALL docs in `docs/` subdirectories (see [documentation.md](.claude/rules/documentation.md))
+7. **GIT COMMIT RULES** — verify root clean, no credentials, no external deps before EVERY commit (see [git-workflow.md](.claude/rules/git-workflow.md))
+8. **DEPLOYMENT SAFETY** — PRD uses `./deploy_prd.sh` only; TEST uses isolated ports/networks (see [deployment.md](.claude/rules/deployment.md))
+9. **MONITORING & ALERTING** — health checks, backups, auto-start, Telegram alerts required (see [monitoring.md](.claude/rules/monitoring.md))
+10. **PATH CONVENTIONS** — absolute paths in scripts, relative in configs, environment-driven (see [path-conventions.md](.claude/rules/path-conventions.md))
 
-**The repository root MUST contain ONLY:**
+## Project
 
-#### **Required Configuration Files:**
-- `README.md` - Project readme
-- `LICENSE` - License file
-- `.gitignore` - Git ignore rules
-- `CLAUDE.md` - This file (development rules)
+- **Repository:** `mem0-system`
+- **Root:** `/Volumes/Data/ai_projects/mem0-system`
+- **Purpose:** Shared memory service for wingman, intel-system, cv-automation
+- **Environments:** TEST (ports 15432, 18888) + PRD (ports 5433, 8889)
 
-#### **Required Deployment Files:**
-- `docker-compose.prd.yml` - Production compose
-- `docker-compose.test.yml` - Test compose
-- `Dockerfile.mem0` - Custom image build
-- `deploy_prd.sh` - Production deployment script
-- `com.mem0.prd.plist` - launchd auto-start service
+## Repo Layout
 
-#### **Required Environment Files:**
-- `.env` - Production config (git-ignored)
-- `.env.test` - Test config (git-ignored)
-- `.env.example` / `env.example` - Environment template
+- `lib/` — Python application code
+- `scripts/` — Operational scripts (backup, monitoring)
+- `docs/` — All documentation
+- `telegram_bot/` — Telegram bot implementation
+- `monitoring/` — Prometheus, Grafana configs
+- `tests/` — Test scripts
+- `tools/` — Utilities
+- `deployment/` — Deployment artifacts
+- `archive/` — Archived files
 
-#### **Allowed Directories ONLY:**
-- `scripts/` - Operational scripts (backup, monitoring, utilities)
-- `lib/` - Python modules and application code
-- `utils/` - Utility functions and helpers
-- `docs/` - All documentation
-- `telegram_bot/` - Telegram bot implementation
-- `monitoring/` - Monitoring configs (Prometheus, Grafana)
-- `tests/` - Test scripts
-- `archive/` - Archived files (dev, old configs)
-- `deployment/` - Deployment artifacts
-- `.git/` - Git repository data
-- `.dr-data/` - Disaster recovery data
+## Key Rules (see `.claude/rules/` for details)
 
-#### **FORBIDDEN in Root:**
-- ❌ NO loose Python files (`.py`) - must be in `lib/`
-- ❌ NO loose shell scripts (`.sh`) - must be in `scripts/`
-- ❌ NO markdown docs - must be in `docs/`
-- ❌ NO test files - must be in `tests/`
-- ❌ NO temporary files
-- ❌ NO backup files (`.bak`, `.old`, `.tmp`)
-- ❌ NO development artifacts
+- **Security**: [.claude/rules/security.md](.claude/rules/security.md) — never commit secrets, single source of truth (.env)
+- **Isolation**: [.claude/rules/isolation.md](.claude/rules/isolation.md) — zero external dependencies, 100% self-contained
+- **File Organization**: [.claude/rules/file-organization.md](.claude/rules/file-organization.md) — clean root directory (≤ 15 files)
+- **Docker Conventions**: [.claude/rules/docker-conventions.md](.claude/rules/docker-conventions.md) — labels, naming, networks
+- **Deployment**: [.claude/rules/deployment.md](.claude/rules/deployment.md) — TEST/PRD isolation, health checks
+- **Monitoring**: [.claude/rules/monitoring.md](.claude/rules/monitoring.md) — data-aware monitoring, backups, alerts
+- **Git Workflow**: [.claude/rules/git-workflow.md](.claude/rules/git-workflow.md) — commit rules, enforcement checklist
+- **Documentation**: [.claude/rules/documentation.md](.claude/rules/documentation.md) — proper directory structure
+- **Path Conventions**: [.claude/rules/path-conventions.md](.claude/rules/path-conventions.md) — absolute vs relative paths
+- **Incidents**: [.claude/rules/incidents.md](.claude/rules/incidents.md) — incident history & key learnings
 
-**ENFORCEMENT:**
-- Before ANY commit, verify root is clean
-- Use `ls -la | grep -v "^d" | wc -l` - should be ≤ 15 files
-- Any new file in root requires explicit justification
+## Namespaces (Logical Isolation)
 
----
+Each client system has its own namespace (`user_id`):
+- `wingman` — Wingman system
+- `intel-system` — Intel system
+- `cv-automation` — CV automation system
 
-### RULE 2: NO HARDCODED CREDENTIALS (SECURITY)
+## Environments
 
-**NEVER commit or hardcode:**
-- Passwords
-- API keys
-- Tokens
-- Client secrets
-- Database credentials
-- Private keys
-- Telegram tokens
+**TEST**: `http://localhost:18888` (API), port 15432 (Postgres)
+**PRD**: `http://localhost:8889` (API), port 5433 (Postgres)
 
-**ALL credentials MUST:**
-- Be in `.env` files (git-ignored)
-- Use environment variables in code: `${VAR_NAME:?required}`
-- Use placeholders in examples: `REPLACE_ME` or `your_token_here`
-
-**ALL configuration values MUST:**
-- Use environment variables for ports, URLs, database names
-- NO hardcoded ports (e.g., `localhost:8888`) - use `${MEM0_PORT}`
-- NO hardcoded credentials in connection strings
-- Single source of truth: `.env` file for all config
-- Scripts MUST read from environment or `.env`
-
-**Violation = IMMEDIATE SECURITY INCIDENT / OPERATIONAL FAILURE**
-
----
-
-### RULE 3: ZERO EXTERNAL DEPENDENCIES (ISOLATION)
-
-**This repository MUST be 100% self-contained:**
-
-- ❌ NO references to `/Volumes/Data/ai_projects/intel-system`
-- ❌ NO references to `/Volumes/Data/ai_projects/wingman-system`
-- ❌ NO `../../` paths that go outside this repo
-- ❌ NO external service dependencies (e.g., `intel-llm-router`)
-- ✅ ALL scripts in `./scripts/`
-- ✅ ALL configs in this repo
-- ✅ ALL dependencies declared in requirements.txt or Dockerfile
-
-**Exception:** Host-level services (Docker, Ollama on host.docker.internal)
-
----
-
-### RULE 4: PROPER FILE ORGANIZATION
-
-**Python Files:**
-- Application code → `lib/`
-- Utilities → `utils/`
-- Tests → `tests/`
-
-**Shell Scripts:**
-- Operational scripts → `scripts/`
-- Deployment → `deploy_prd.sh` (root only)
-
-**Documentation:**
-- Deployment guides → `docs/deployment/`
-- Operations → `docs/operations/`
-- Architecture → `docs/`
-- Historical → `docs/archive/`
-
-**Configuration:**
-- Docker compose → Root (docker-compose.*.yml)
-- Monitoring → `monitoring/`
-- Environment → `.env` files (root, git-ignored)
-
----
-
-### RULE 5: DOCKER LABELS & NAMING
-
-**All containers MUST use:**
-- Labels: `com.mem0-system.*` (NOT `com.intel-system`)
-- Network: `mem0_internal_*` (environment-specific)
-- Container names: `mem0_*_prd` or `mem0_*_test`
-
-**Images MUST:**
-- Use custom builds: `mem0-fixed:local`
-- Be built from Dockerfiles in THIS repo
-- NOT use upstream images in production
-
----
-
-### RULE 6: DOCUMENTATION REQUIREMENTS
-
-**When creating documentation:**
-- ❌ NEVER create new files in root
-- ✅ ALWAYS use existing docs or add to `docs/`
-- ✅ Update existing guides, don't duplicate
-- ✅ Use proper directory structure
-
-**Documentation structure:**
-```
-docs/
-├── deployment/     (deployment guides)
-├── operations/     (operational procedures)
-├── archive/        (historical/deprecated)
-├── *.md            (main documentation)
-```
-
----
-
-### RULE 7: GIT COMMIT RULES
-
-**Before EVERY commit:**
-1. Verify root directory is clean
-2. Check NO hardcoded credentials
-3. Ensure NO external dependencies
-4. Run linting/validation if available
-5. Test deployment if config changed
-
-**Commit message format:**
-```
-type: brief description
-
-- Detailed change 1
-- Detailed change 2
-
-Refs: #issue (if applicable)
-```
-
-**NEVER commit:**
-- `.env` files (use `.gitignore`)
-- Credentials or secrets
-- Temporary files
-- IDE-specific files (already in `.gitignore`)
-
----
-
-### RULE 8: DEPLOYMENT SAFETY
-
-**Production deployment MUST:**
-- Use `./deploy_prd.sh` (NEVER direct docker-compose)
-- Require `.env` with `DEPLOYMENT_ENV=prd`
-- Validate environment before starting
-- Check health after deployment
-- Support rollback
-
-**Test deployment MUST:**
-- Use isolated ports (15432, 18888, etc.)
-- Use separate network (`mem0_internal_test`)
-- Use separate data directory
-- NOT conflict with PRD
-
----
-
-### RULE 9: MONITORING & ALERTING
-
-**REQUIRED monitoring:**
-- Health checks every 5 minutes
-- Backups daily at 2:30 AM
-- Auto-start via launchd
-- Telegram alerts on failures
-
-**Scripts MUST:**
-- Be in `scripts/` directory
-- Have execute permissions
-- Be self-contained (no external deps)
-- Source config from `.env`
-
----
-
-### RULE 10: PATH CONVENTIONS
-
-**All paths MUST be:**
-- Absolute paths in scripts: `/Volumes/Data/ai_projects/mem0-system/...`
-- Relative paths in configs: `./lib/`, `./scripts/`, etc.
-- Environment-variable driven where possible
-
-**Container paths:**
-- Data: `/app/data`
-- Patches: `/app/*.py`
-- Scripts: `/app/*.sh`
-
----
-
-## 🔧 ENFORCEMENT CHECKLIST
-
-Before any code change:
-- [ ] Root directory contains ≤ 15 files
-- [ ] No `.py` or `.sh` files in root (except deploy_prd.sh)
-- [ ] No credentials in any files
-- [ ] No references to intel-system or wingman-system
-- [ ] All new docs in `docs/` subdirectories
-- [ ] Docker labels use `com.mem0-system`
-- [ ] Changes tested in test environment
-
----
-
-## 📋 QUICK VERIFICATION
+## Quick Verification
 
 ```bash
 # Check root is clean (should be ≤ 15 files)
@@ -262,72 +79,13 @@ grep -r "intel-system\|wingman-system\|../../" --include="*.yml" --include="*.sh
 tree -L 1 -d
 ```
 
----
+## Philosophy
 
-## ⚠️ VIOLATION CONSEQUENCES
-
-**If rules are violated:**
-1. Immediate rollback of changes
-2. Fix violations before proceeding
-3. Update this document if rule needs clarification
-4. Document lesson learned
-
-**No exceptions** - these rules exist to prevent production outages and security incidents.
-
----
-
-## 📚 INCIDENT HISTORY & LEARNINGS
-
-### Incident: 2026-01-27 - Complete Data Loss (CRITICAL)
-
-**Summary:** Complete data loss (1,968 memories) due to Docker container recreation with incompatible credentials and embedding model changes. Successfully restored from backup.
-
-**Root Cause:**
-1. Containers recreated on 2026-01-10 with new credentials (mem0_user → mem0_user_prd)
-2. Embedding model switched from OpenAI (1536 dims) to Ollama (768 dims) on 2026-01-07
-3. Result: Fresh empty database created, old data inaccessible
-
-**Contributing Factors:**
-- Hardcoded ports in scripts (localhost:8888 vs actual 8889/18888)
-- Silent sync failures (scripts never connected, no error logging)
-- No data validation in backups (backed up empty database for 17 days)
-- No monitoring alerts (memory count dropped from 1,968 → 0 with no alerts)
-- Insufficient self-healing (only restarted containers, didn't validate data)
-
-**Prevention Measures Implemented:**
-1. ✅ Fixed hardcoded ports in all operational scripts (deploy_prd.sh, rebuild_mem0.sh, etc.)
-2. ✅ Created comprehensive incident documentation (docs/incidents/2026-01-27_DATA_LOSS_RESTORATION.md)
-3. ⏳ Add Grafana alerts for memory count = 0 or drops >50%
-4. ⏳ Add backup validation (verify data before saving)
-5. ⏳ Add automatic restore mechanism for empty database detection
-6. ⏳ Document safe container recreation procedure
-
-**Key Learnings:**
-- **Data-aware monitoring** - Monitor what matters (data), not just containers
-- **Backup validation** - Verify backups contain actual data before overwriting
-- **Configuration management** - Single source of truth for credentials/ports, no hardcoding
-- **Better logging** - Failed connections must log errors and alert
-- **Regular DR testing** - Test restore process monthly, not just backup
-
-**Full Details:** `/Volumes/Data/ai_projects/mem0-system/docs/incidents/2026-01-27_DATA_LOSS_RESTORATION.md`
-
----
-
-### Incident: 2026-01-03 - Reboot Outage
-
-**Summary:** Auto-start failure after reboot due to missing launchd configuration.
-
-**Prevention:** Rules 1, 3, 8, 9 established; `com.mem0.prd.plist` created for auto-start.
-
----
-
-## 🎯 PHILOSOPHY
-
-**This repository is:**
-- Production-focused (PRD + TEST only)
-- Self-contained (zero external dependencies)
-- Clean and organized (proper file structure)
-- Secure (no hardcoded credentials)
-- Resilient (auto-recovery, monitoring)
+This repository is:
+- **Production-focused** (PRD + TEST only)
+- **Self-contained** (zero external dependencies)
+- **Clean and organized** (proper file structure)
+- **Secure** (no hardcoded credentials)
+- **Resilient** (auto-recovery, data-aware monitoring)
 
 **Keep it that way.**

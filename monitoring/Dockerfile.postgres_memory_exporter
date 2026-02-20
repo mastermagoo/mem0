@@ -1,0 +1,23 @@
+FROM python:3.11-slim
+
+# Bake in OS deps so DR cold restarts don't rely on runtime apt-get
+RUN apt-get update -qq && apt-get install -y -qq --no-install-recommends \
+    libpq-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# psycopg (v3) is used by postgres_memory_exporter.py
+RUN pip install --no-cache-dir -q "psycopg[binary]"
+
+WORKDIR /app
+COPY postgres_memory_exporter.py /app/exporter.py
+
+EXPOSE 9094
+
+# Healthcheck is part of the image so it survives compose edits and DR rebuilds
+# Uses EXPORTER_PORT env var (default 9094 for PRD, 9095 for TEST)
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD sh -c 'curl -fsS "http://localhost:${EXPORTER_PORT:-9094}/health" || exit 1'
+
+CMD ["python", "/app/exporter.py"]
+

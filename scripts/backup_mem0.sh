@@ -5,6 +5,9 @@
 
 set -euo pipefail
 
+# Fix PATH for cron environment (Docker via OrbStack)
+export PATH="/Users/kermit/.orbstack/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
+
 MODE="${1:-daily}"
 timestamp="$(date +%Y%m%d_%H%M%S)"
 

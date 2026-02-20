@@ -13,8 +13,12 @@ POSTGRES_HOST = os.getenv("POSTGRES_HOST", "postgres")
 POSTGRES_PORT = int(os.getenv("POSTGRES_PORT", "5432"))
 POSTGRES_USER = os.getenv("POSTGRES_USER", "mem0_user_prd")
 POSTGRES_DB = os.getenv("POSTGRES_DB", "mem0_prd")
-POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "mem0PrdPassword2026SecureV2")
 EXPORTER_PORT = int(os.getenv("EXPORTER_PORT", "9094"))
+
+# Required secrets
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+if not POSTGRES_PASSWORD:
+    raise RuntimeError("POSTGRES_PASSWORD is required (do not hardcode secrets in code)")
 
 # Thresholds for alerts
 CRITICAL_THRESHOLD = 0  # Alert if memory count = 0

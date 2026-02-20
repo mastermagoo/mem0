@@ -9,21 +9,26 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Namespace display info (emoji + description)
+# This is metadata only - actual namespaces come from config.namespaces (environment-driven)
+# Format: NAMESPACE_INFO[namespace] = {'emoji': '📊', 'desc': 'Description'}
+# If a namespace is not in this dict, defaults will be used
 NAMESPACE_INFO = {
+    'sap': {'emoji': '📊', 'desc': 'SAP client work & intelligence'},
     'personal': {'emoji': '👤', 'desc': 'Personal notes & reminders'},
     'progressief': {'emoji': '🏢', 'desc': 'Progressief B.V. work'},
     'cv_automation': {'emoji': '💼', 'desc': 'CV automation project'},
     'investments': {'emoji': '💰', 'desc': 'Investment research & tracking'},
     'intel_system': {'emoji': '🖥', 'desc': 'Intel system infrastructure'},
-    'ai_projects': {'emoji': '🤖', 'desc': 'AI project development'},
-    'vectal': {'emoji': '🎯', 'desc': 'Vectal.ai development'}
+    'wingman': {'emoji': '🛡️', 'desc': 'Wingman system & assistant'},
+    'mem0': {'emoji': '🧠', 'desc': 'mem0 system & Telegram bot'}
 }
 
 async def namespace_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Handle /namespace command - show current namespace and switch options
     """
-    current_namespace = context.user_data.get('namespace', 'personal')
+    config = context.bot_data['config']
+    current_namespace = context.user_data.get('namespace', config.default_namespace)
     config = context.bot_data['config']
 
     # Build inline keyboard with namespace buttons

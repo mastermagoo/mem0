@@ -14,10 +14,11 @@ import requests
 from typing import Dict, List
 from datetime import datetime
 import json
+import os
 
 # Test configuration
-MEM0_URL = "http://localhost:8888"
-API_KEY = "your_api_key_here"  # TODO: Load from .env
+MEM0_URL = os.getenv("MEM0_URL", "http://localhost:8889")  # Default to PRD port
+API_KEY = os.getenv("MEM0_API_KEY", "your_api_key_here")
 USER_ID = "mark_carey"
 
 # Colors for output

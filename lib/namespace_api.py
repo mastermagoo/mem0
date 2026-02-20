@@ -399,27 +399,27 @@ To integrate this into your mem0 FastAPI application:
 4. Example API calls:
 
    # List all namespaces
-   GET http://localhost:8888/v1/namespace/list
+   GET http://localhost:${MEM0_PORT}/v1/namespace/list
 
    # Get current namespace
-   GET http://localhost:8888/v1/namespace/current
+   GET http://localhost:${MEM0_PORT}/v1/namespace/current
 
    # Switch namespace
-   POST http://localhost:8888/v1/namespace/switch
+   POST http://localhost:${MEM0_PORT}/v1/namespace/switch
    {"namespace": "progressief"}
 
    # Get namespace info
-   GET http://localhost:8888/v1/namespace/progressief/info
+   GET http://localhost:${MEM0_PORT}/v1/namespace/progressief/info
 
    # Get namespace stats
-   GET http://localhost:8888/v1/namespace/progressief/stats
+   GET http://localhost:${MEM0_PORT}/v1/namespace/progressief/stats
 
    # Add memory with namespace (to existing endpoint)
-   POST http://localhost:8888/memories
+   POST http://localhost:${MEM0_PORT}/memories
    X-Namespace: progressief
    {"messages": [...], "user_id": "mark_carey"}
 
    # Search memories in namespace
-   GET http://localhost:8888/memories?user_id=mark_carey
+   GET http://localhost:${MEM0_PORT}/memories?user_id=mark_carey
    X-Namespace: cv_automation
 """

@@ -37,6 +37,18 @@ class NamespaceRegistry:
     """
 
     NAMESPACES: Dict[str, NamespaceConfig] = {
+        'sap': NamespaceConfig(
+            name='sap',
+            description='SAP client work and intelligence',
+            use_cases=[
+                'SAP client meetings and notes',
+                'SAP project context and deliverables',
+                'SAP business intelligence',
+                'SAP client relationship management'
+            ],
+            retention_days=365 * 7,  # 7 years for business records
+            sensitivity='HIGH'
+        ),
         'progressief': NamespaceConfig(
             name='progressief',
             description='Progressief B.V. consulting business',
@@ -93,6 +105,30 @@ class NamespaceRegistry:
                 'Technical troubleshooting notes',
                 'Infrastructure changes and rationale',
                 'Development project context'
+            ],
+            retention_days=365 * 3,  # 3 years
+            sensitivity='MEDIUM'
+        ),
+        'wingman': NamespaceConfig(
+            name='wingman',
+            description='Wingman system and assistant',
+            use_cases=[
+                'Wingman assistant interactions',
+                'Wingman system configuration',
+                'Wingman project context',
+                'Wingman development notes'
+            ],
+            retention_days=365 * 3,  # 3 years
+            sensitivity='MEDIUM'
+        ),
+        'mem0': NamespaceConfig(
+            name='mem0',
+            description='mem0 system and Telegram bot',
+            use_cases=[
+                'mem0 system operations',
+                'Telegram bot conversations',
+                'mem0 configuration and setup',
+                'mem0 development and maintenance'
             ],
             retention_days=365 * 3,  # 3 years
             sensitivity='MEDIUM'

@@ -17,7 +17,8 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_name = update.effective_user.first_name
 
     # Initialize user's namespace to default
-    context.user_data['namespace'] = 'personal'
+    config = context.bot_data['config']
+    context.user_data['namespace'] = config.default_namespace
 
     welcome_message = (
         f"👋 Welcome {user_name}!\n\n"
@@ -31,7 +32,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "📊 /stats - View statistics\n"
         "🏥 /status - System health\n"
         "❓ /help - Detailed help\n\n"
-        f"Current namespace: 👤 personal\n\n"
+        f"Current namespace: {config.default_namespace}\n\n"
         "Start by storing a memory:\n"
         "`/remember Meeting with John tomorrow at 2pm`"
     )

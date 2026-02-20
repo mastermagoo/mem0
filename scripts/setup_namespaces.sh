@@ -87,7 +87,7 @@ DROP CONSTRAINT IF EXISTS chk_valid_namespace;
 
 ALTER TABLE memories
 ADD CONSTRAINT chk_valid_namespace
-CHECK (namespace IN ('progressief', 'cv_automation', 'investments', 'personal', 'intel_system'));
+CHECK (namespace IN ('sap', 'progressief', 'cv_automation', 'investments', 'personal', 'intel_system', 'wingman', 'mem0'));
 
 -- Create indexes
 CREATE INDEX IF NOT EXISTS idx_memories_namespace_user
@@ -244,7 +244,7 @@ echo ""
 echo "Next steps:"
 echo "  1. Read the user guide: NAMESPACE_GUIDE.md"
 echo "  2. Test isolation: python test_namespace_isolation.py"
-echo "  3. Start using: curl http://localhost:8888/v1/namespace/list"
+echo "  3. Start using: curl http://localhost:${MEM0_PORT}/v1/namespace/list"
 echo ""
 echo -e "${YELLOW}Important:${NC} All new memories default to 'personal' namespace"
 echo -e "${YELLOW}Use X-Namespace header or /namespace commands to specify${NC}"
@@ -252,5 +252,5 @@ echo ""
 
 # Show quick test command
 echo -e "${BLUE}Quick test:${NC}"
-echo "curl http://localhost:8888/v1/namespace/list"
+echo "curl http://localhost:${MEM0_PORT}/v1/namespace/list"
 echo ""

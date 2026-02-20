@@ -4,6 +4,7 @@ mem0 Telegram Bot - Universal AI Memory Access
 Provides Telegram interface for mem0 memory system across all devices
 """
 import logging
+import os
 import sys
 from telegram import Update
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters
@@ -41,6 +42,10 @@ def main():
             logger.info("✅ mem0 server is healthy")
         else:
             logger.warning(f"⚠️ mem0 server health check failed: {health.get('error')}")
+
+        # Namespaces are loaded from NAMESPACES environment variable in config.py
+        # If NAMESPACES is not set, defaults are used
+        logger.info(f"Loaded {len(config.namespaces)} namespaces from configuration")
 
         # Build application
         application = Application.builder().token(config.telegram_token).build()

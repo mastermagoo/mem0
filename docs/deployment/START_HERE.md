@@ -1,7 +1,7 @@
 # 🚀 mem0 PRD - Start Here
 
-**Last Updated:** 2026-01-09 16:10
-**Status:** ✅ DEPLOYED & RUNNING
+**Last Updated:** 2026-01-10 19:35
+**Status:** ✅ DEPLOYED & RUNNING (PRD + TEST)
 
 ---
 
@@ -45,17 +45,21 @@ cd /Volumes/Data/ai_projects/mem0-system
 
 ---
 
-## ⚠️ One Manual Fix Needed
+## ✅ TEST Environment
 
-Edit `/Volumes/Data/ai_projects/mem0-system/.env` and set:
+**mem0 TEST is also available:**
 
+- 🟢 API: http://localhost:18888/docs
+- 🟢 Grafana: http://localhost:23010
+- 🟢 Neo4j: http://localhost:27474
+- 🟢 PostgreSQL: localhost:25432
+
+**Start TEST:**
 ```bash
-TELEGRAM_BOT_TOKEN=8272438703:AAHXnyrkdQ3s9r0QEGoentrTFxuaD5B5nSk
-TELEGRAM_CHAT_ID=7007859146
+cd /Volumes/Data/ai_projects/mem0-system
+./scripts/start_test.sh
 ```
-
-Then: `docker restart mem0_telegram_bot_prd`
 
 ---
 
-**Everything else is automated and working!**
+**Everything is automated and working!**

@@ -109,7 +109,8 @@ deploy_up() {
     print_info "Deploying mem0 production stack..."
     print_warning "This will affect: intel-sys, wingman, cv-automation, accounting"
 
-    docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d
+    # DR/Cold-restart robustness: always build any services with a Dockerfile
+    docker compose --project-name mem0-prd -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --build
 
     echo ""
     print_success "Deployment initiated"
@@ -138,7 +139,7 @@ deploy_down() {
     print_warning "Stopping mem0 production stack..."
     print_warning "This will affect: intel-sys, wingman, cv-automation, accounting"
 
-    docker compose -f "$COMPOSE_FILE" down
+    docker compose --project-name mem0-prd -f "$COMPOSE_FILE" down
 
     print_success "Services stopped"
 }
@@ -149,7 +150,7 @@ deploy_restart() {
 
     print_info "Restarting mem0 production stack..."
 
-    docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" restart
+    docker compose --project-name mem0-prd -f "$COMPOSE_FILE" --env-file "$ENV_FILE" restart
 
     echo ""
     print_success "Services restarted"
@@ -163,10 +164,10 @@ show_logs() {
 
     if [ -z "$service" ]; then
         print_info "Showing logs for all services (last 50 lines)..."
-        docker compose -f "$COMPOSE_FILE" logs --tail=50
+        docker compose --project-name mem0-prd -f "$COMPOSE_FILE" logs --tail=50
     else
         print_info "Showing logs for $service (last 50 lines)..."
-        docker compose -f "$COMPOSE_FILE" logs --tail=50 "$service"
+        docker compose --project-name mem0-prd -f "$COMPOSE_FILE" logs --tail=50 "$service"
     fi
 }
 
@@ -197,13 +198,13 @@ validate_deployment() {
     fi
 
     # Check network
-    if docker network inspect mem0_internal > /dev/null 2>&1; then
-        print_success "Network mem0_internal exists"
+    if docker network inspect mem0_internal_prd > /dev/null 2>&1; then
+        print_success "Network mem0_internal_prd exists"
 
-        local network_containers=$(docker network inspect mem0_internal --format '{{range .Containers}}{{.Name}} {{end}}')
+        local network_containers=$(docker network inspect mem0_internal_prd --format '{{range .Containers}}{{.Name}} {{end}}')
         print_info "Containers on network: $network_containers"
     else
-        print_error "Network mem0_internal does not exist"
+        print_error "Network mem0_internal_prd does not exist"
         ((errors++))
     fi
 

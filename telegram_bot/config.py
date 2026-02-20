@@ -26,16 +26,11 @@ class Config:
         # User identification (for single-user deployment)
         self.user_prefix = os.getenv('USER_PREFIX', 'mark_carey')
 
-        # Available namespaces (can be expanded)
-        self.namespaces = [
-            'personal',
-            'progressief',
-            'cv_automation',
-            'investments',
-            'intel_system',
-            'ai_projects',
-            'vectal'
-        ]
+        # Available namespaces - loaded from environment variable (comma-separated)
+        # Format: NAMESPACES=sap,personal,progressief,cv_automation,investments,intel_system,wingman,mem0
+        # If not set, uses default list (can be overridden via environment)
+        namespaces_str = os.getenv('NAMESPACES', 'sap,personal,progressief,cv_automation,investments,intel_system,wingman,mem0')
+        self.namespaces = [ns.strip() for ns in namespaces_str.split(',') if ns.strip()]
 
     def get_full_user_id(self, namespace: str) -> str:
         """Construct full user ID for mem0 with namespace"""
