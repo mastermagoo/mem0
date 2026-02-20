@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAP RAG Query - Simple Frontend</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .query-section {
+            padding: 30px;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+        
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+        
+        .status {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .status.loading {
+            display: block;
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .status.error {
+            display: block;
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .status.success {
+            display: block;
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .results {
+            margin-top: 20px;
+        }
+        
+        .result-item {
+            background: #f9f9f9;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            transition: transform 0.2s;
+        }
+        
+        .result-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .result-score {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .result-content {
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+        
+        .result-source {
+            font-size: 12px;
+            color: #888;
+            font-family: 'Courier New', monospace;
+            background: #f0f0f0;
+            padding: 6px 10px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+        
+        .quick-queries {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .quick-queries h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .quick-btn {
+            display: inline-block;
+            margin: 5px;
+            padding: 8px 16px;
+            background: #f5f5f5;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .quick-btn:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 SAP RAG Query</h1>
+            <p>Search 705 indexed SAP documents instantly</p>
+        </div>
+        
+        <div class="query-section">
+            <div class="input-group">
+                <label for="query">Ask a question about SAP documents:</label>
+                <input type="text" id="query" placeholder="e.g., What did Oliver say about performance?" autofocus>
+            </div>
+            
+            <div class="button-group">
+                <button class="btn-primary" onclick="queryRAG()">🔍 Search</button>
+                <button class="btn-secondary" onclick="clearResults()">Clear</button>
+            </div>
+            
+            <div id="status" class="status"></div>
+            
+            <div id="results" class="results"></div>
+            
+            <div class="quick-queries">
+                <h3>Quick Queries - Strategic Intelligence:</h3>
+                <button class="quick-btn" onclick="setQuery('What is the data lake strategy and how does it relate to Service NOW?')">⭐ Data Lake Strategy</button>
+                <button class="quick-btn" onclick="setQuery('What are Oliver Posselt priorities and focus areas?')">Oliver Priorities</button>
+                <button class="quick-btn" onclick="setQuery('How does current BTP architecture relate to data lake migration?')">BTP → Data Lake</button>
+                <button class="quick-btn" onclick="setQuery('What are the key findings from BTP performance investigation?')">BTP Performance</button>
+                <button class="quick-btn" onclick="setQuery('What did Oliver say about performance targets?')">Performance Targets</button>
+                <button class="quick-btn" onclick="setQuery('What stakeholders are involved in datalake work?')">Datalake Stakeholders</button>
+                <button class="quick-btn" onclick="setQuery('What technical challenges exist for Service NOW integration?')">Service NOW Integration</button>
+                <button class="quick-btn" onclick="setQuery('What migration considerations exist for data lake?')">Migration Considerations</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const RAG_URL = 'http://localhost:8020';
+        
+        function setQuery(text) {
+            document.getElementById('query').value = text;
+            queryRAG();
+        }
+        
+        function showStatus(type, message) {
+            const status = document.getElementById('status');
+            status.className = `status ${type}`;
+            status.textContent = message;
+            status.style.display = 'block';
+        }
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('status').style.display = 'none';
+        }
+        
+        async function queryRAG() {
+            const query = document.getElementById('query').value.trim();
+            
+            if (!query) {
+                showStatus('error', 'Please enter a query');
+                return;
+            }
+            
+            showStatus('loading', '🔍 Searching 705 documents...');
+            document.getElementById('results').innerHTML = '';
+            
+            try {
+                const response = await fetch(`${RAG_URL}/rag/query`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query: query,
+                        k: 5,
+                        threshold: 0.6,
+                        include_metadata: true
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                const results = data.results || [];
+                
+                if (results.length === 0) {
+                    showStatus('success', '✅ Query completed, but no documents found. Try rephrasing.');
+                    document.getElementById('results').innerHTML = '<div class="no-results">📄 No documents found matching your query. Try different keywords or rephrasing.</div>';
+                    return;
+                }
+                
+                showStatus('success', `✅ Found ${results.length} relevant documents`);
+                
+                let html = '';
+                results.forEach((result, index) => {
+                    const content = result.content || result.document || '';
+                    const metadata = result.metadata || {};
+                    const score = (result.score || 0).toFixed(3);
+                    const source = metadata.source || metadata.relative_path || 'Unknown';
+                    
+                    html += `
+                        <div class="result-item">
+                            <div class="result-header">
+                                <strong>Result ${index + 1}</strong>
+                                <span class="result-score">Score: ${score}</span>
+                            </div>
+                            <div class="result-content">${content.substring(0, 400)}${content.length > 400 ? '...' : ''}</div>
+                            <div class="result-source">📄 ${source}</div>
+                        </div>
+                    `;
+                });
+                
+                document.getElementById('results').innerHTML = html;
+                
+            } catch (error) {
+                console.error('RAG query error:', error);
+                showStatus('error', `❌ Error: ${error.message}\n\n💡 Make sure RAG pipeline is running on ${RAG_URL}`);
+                document.getElementById('results').innerHTML = `
+                    <div class="no-results">
+                        <p>⚠️ Could not connect to RAG service.</p>
+                        <p style="margin-top: 10px; font-size: 12px;">Check if RAG pipeline is running:<br>
+                        <code>docker ps | grep rag-pipeline</code></p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Allow Enter key to trigger search
+        document.getElementById('query').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                queryRAG();
+            }
+        });
+    </script>
+</body>
+</html>
+
