@@ -41,6 +41,11 @@ wheels/
 *.log
 logs/
 
+# Backup files
+*.backup
+*.bak
+*.bak2
+
 # Results and temporary files
 results/
 *.tmp
@@ -63,4 +68,7 @@ htmlcov/
 *.db
 *.sqlite
 *.sqlite3
-.env.test
+
+# IDE / cursor
+.cursor/
+.claude/

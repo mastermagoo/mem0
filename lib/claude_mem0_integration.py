@@ -4,14 +4,17 @@ Claude Code + mem0 Integration
 Automatically captures important information from conversations
 """
 
+import os
 import requests
 import json
 from datetime import datetime
 
 class ClaudeMemory:
     def __init__(self):
-        self.base_url = "http://127.0.0.1:8888"
-        self.api_key = "mem0-b0539021-c9a6-4aaa-9193-665f63851a0d"
+        self.base_url = os.getenv("MEM0_URL", "http://127.0.0.1:8888")
+        self.api_key = os.getenv("MEM0_API_KEY")
+        if not self.api_key:
+            raise ValueError("MEM0_API_KEY environment variable is required")
         self.headers = {"Authorization": f"Bearer {self.api_key}"}
         self.user_id = "mark_carey/intel_system"  # Default namespace
 
